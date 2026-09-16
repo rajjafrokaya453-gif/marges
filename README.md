@@ -3,7 +3,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Marges</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -662,6 +662,367 @@
   .deleted-card{display:none!important}
   .hidden-by-filter{display:none!important}
   @media(max-width:480px){.library-tools{grid-template-columns:1fr}.wide-panel{max-width:100%}}
+
+
+/* =========================================================
+   MARGES V5 — adaptation mobile / téléphone
+   ========================================================= */
+
+/* Meilleure gestion des hauteurs réelles des navigateurs mobiles */
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#feed {
+  height: 100dvh;
+  min-height: 100svh;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-top: env(safe-area-inset-top);
+}
+
+section.card-slot {
+  height: 100dvh;
+  min-height: 100svh;
+  padding:
+    calc(58px + env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    calc(78px + env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+}
+
+.flip-container {
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+  transform: scale(.985);
+}
+
+.card-slot.in-view .flip-container {
+  transform: scale(1);
+}
+
+.card {
+  border-radius: 12px;
+  padding:
+    calc(30px + env(safe-area-inset-top))
+    clamp(18px, 5vw, 30px)
+    calc(72px + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.card::before {
+  top: 18px;
+  left: 18px;
+}
+
+.card-index {
+  top: 16px;
+  right: 18px;
+}
+
+.card-tag {
+  margin-left: 20px;
+  margin-top: 0;
+  font-size: 10px;
+  max-width: calc(100% - 70px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-body {
+  margin-top: 14px;
+  padding-top: 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.card-body::-webkit-scrollbar {
+  display: none;
+}
+
+h1.title {
+  font-size: clamp(25px, 8vw, 34px);
+  overflow-wrap: anywhere;
+}
+
+p.lead {
+  font-size: clamp(15px, 4.5vw, 17px);
+  line-height: 1.48;
+}
+
+.example {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.book-author {
+  font-size: 11px;
+}
+
+ul.takeaways {
+  padding-left: 17px;
+}
+
+ul.takeaways li {
+  font-size: 14px;
+  line-height: 1.42;
+  margin-bottom: 8px;
+}
+
+.sources {
+  flex-shrink: 0;
+}
+
+.sources li {
+  font-size: 10px;
+  line-height: 1.42;
+}
+
+.diagram-wrap {
+  min-height: 150px;
+  padding: 4px 0;
+}
+
+.diagram-wrap svg {
+  width: min(100%, 360px);
+  max-height: 42vh;
+}
+
+.diagram-caption {
+  font-size: 12px;
+  line-height: 1.35;
+  flex-shrink: 0;
+}
+
+/* Les contrôles restent faciles à toucher au pouce */
+.card-controls {
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  padding: 0 12px;
+}
+
+.ctrl-btn {
+  width: 46px;
+  height: 46px;
+  touch-action: manipulation;
+}
+
+#fav-counter,
+#msg-btn {
+  top: calc(10px + env(safe-area-inset-top));
+}
+
+#fav-counter {
+  left: calc(10px + env(safe-area-inset-left));
+  font-size: 11px;
+}
+
+#msg-btn {
+  right: calc(10px + env(safe-area-inset-right));
+  padding: 7px 10px;
+  min-height: 36px;
+  touch-action: manipulation;
+}
+
+#msg-btn span:not(.dot) {
+  display: none;
+}
+
+#nav {
+  right: 5px;
+  gap: 8px;
+}
+
+#nav button {
+  width: 7px;
+  height: 7px;
+  padding: 6px;
+  background-clip: content-box;
+  touch-action: manipulation;
+}
+
+#compose-btn,
+#library-btn {
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  width: 48px;
+  height: 48px;
+}
+
+#compose-btn {
+  left: calc(10px + env(safe-area-inset-left));
+  font-size: 23px;
+}
+
+#library-btn {
+  right: calc(10px + env(safe-area-inset-right));
+  font-size: 17px;
+}
+
+.hint {
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  font-size: 9px;
+}
+
+/* Fenêtres modales adaptées aux écrans étroits */
+.overlay {
+  padding:
+    calc(10px + env(safe-area-inset-top))
+    max(10px, env(safe-area-inset-right))
+    calc(10px + env(safe-area-inset-bottom))
+    max(10px, env(safe-area-inset-left));
+  align-items: flex-end;
+}
+
+.modal-panel,
+.wide-panel {
+  width: 100%;
+  max-width: 100%;
+  max-height: min(90dvh, 760px);
+  border-radius: 14px 14px 8px 8px;
+}
+
+.modal-head {
+  padding: 14px 15px 11px;
+}
+
+.modal-body {
+  padding: 14px 15px 16px;
+  max-height: calc(90dvh - 58px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-close,
+.btn,
+.tb-btn,
+.mode-btn,
+.file-btn,
+.filter-chip,
+.folder-chip,
+.folder-add,
+.library-star,
+.library-delete {
+  min-height: 40px;
+  touch-action: manipulation;
+}
+
+.library-tools {
+  grid-template-columns: 1fr;
+}
+
+#library-search,
+.select-field,
+#add-contact,
+#thread-input,
+#compose-caption {
+  font-size: 16px; /* évite le zoom automatique sur iOS */
+}
+
+#library-results {
+  max-height: 52dvh;
+}
+
+#thread-messages {
+  max-height: 42dvh;
+}
+
+#thread-input-row {
+  padding-bottom: 2px;
+}
+
+.post-tools {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.delete-btn,
+.post-tool-btn {
+  width: 40px;
+  height: 40px;
+}
+
+/* Écrans très petits */
+@media (max-width: 380px) {
+  section.card-slot {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .card {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .card-tag {
+    margin-left: 18px;
+  }
+
+  p.lead {
+    font-size: 15px;
+  }
+
+  .diagram-caption {
+    font-size: 11px;
+  }
+
+  .sources li {
+    font-size: 9.5px;
+  }
+}
+
+/* Paysage : conserver une fiche lisible sans la couper */
+@media (orientation: landscape) and (max-height: 520px) {
+  section.card-slot {
+    padding-top: 42px;
+    padding-bottom: 58px;
+  }
+
+  .card {
+    padding-top: 24px;
+    padding-bottom: 54px;
+  }
+
+  .card-body {
+    overflow-y: auto;
+  }
+
+  .diagram-wrap svg {
+    max-height: 54vh;
+  }
+
+  #compose-btn,
+  #library-btn {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* Respect du mode d'accessibilité "réduire les animations" */
+@media (prefers-reduced-motion: reduce) {
+  .flip-container,
+  .card-inner,
+  .ctrl-btn,
+  #msg-btn,
+  #compose-btn,
+  #library-btn {
+    transition: none !important;
+  }
+
+  #feed {
+    scroll-behavior: auto !important;
+  }
+}
 
 </style>
 </head>
