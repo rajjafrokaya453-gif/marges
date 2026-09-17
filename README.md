@@ -511,6 +511,69 @@
     .flip-container,.card-inner,.ctrl-btn{ transition:none !important; }
     #feed{ scroll-behavior:auto !important; }
   }
+
+  /* ===================== QUIZ ===================== */
+  .quiz-options{ display:flex; flex-direction:column; gap:10px; margin:4px 0 14px; }
+  .quiz-option-btn{
+    text-align:left; font-family:'Instrument Serif',Georgia,serif; font-size:16.5px;
+    color:var(--ink); background:#ffffff55; border:1.4px solid var(--rule);
+    border-radius:10px; padding:12px 14px; cursor:pointer; line-height:1.35;
+    transition:border-color .15s, background .15s, transform .1s;
+  }
+  .quiz-option-btn:active{ transform:scale(.98); }
+  .quiz-option-btn .qo-letter{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:50%; border:1.2px solid var(--olive-text);
+    font-family:'Montserrat',Arial,sans-serif; font-size:11px; color:var(--olive-text);
+    margin-right:10px; flex-shrink:0; vertical-align:middle;
+  }
+  .quiz-options.answered .quiz-option-btn{ cursor:default; }
+  .quiz-option-btn.correct{
+    border-color:var(--olive); background:rgba(168,181,138,.32);
+  }
+  .quiz-option-btn.correct .qo-letter{ background:var(--olive); border-color:var(--olive); color:#fff; }
+  .quiz-option-btn.incorrect{
+    border-color:var(--rosewood); background:rgba(180,106,114,.16);
+  }
+  .quiz-option-btn.incorrect .qo-letter{ background:var(--rosewood); border-color:var(--rosewood); color:#fff; }
+  .quiz-options.answered .quiz-option-btn:not(.correct):not(.incorrect){ opacity:.5; }
+  .quiz-feedback{
+    font-family:'Montserrat',Arial,sans-serif; font-size:12.5px; font-weight:600;
+    letter-spacing:.01em; margin:-2px 0 12px; min-height:16px;
+  }
+  .quiz-feedback.is-correct{ color:var(--olive-text); }
+  .quiz-feedback.is-incorrect{ color:var(--rosewood); }
+  .quiz-hint{
+    margin-top:auto; padding-top:12px; border-top:1px dashed rgba(105,116,81,.4);
+    font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:13.5px;
+    color:var(--olive-text); opacity:.85; text-align:center;
+  }
+
+  .quiz-builder{ display:none; margin:4px 0 14px; padding:12px; border:1px solid var(--rule); border-radius:6px; background:#ffffff38; }
+  .quiz-builder.open{ display:block; }
+  .quiz-builder textarea{
+    width:100%; padding:10px; border:1px solid var(--rule); border-radius:4px;
+    margin-bottom:12px; background:#ffffff66; color:var(--ink); font-family:'Instrument Serif',Georgia,serif; font-size:15px;
+  }
+  .quiz-option-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .quiz-option-row input[type="text"]{
+    flex:1; font-family:'Instrument Serif',Georgia,serif; font-size:15px; padding:9px 10px;
+    border:1px solid var(--rule); border-radius:4px; background:#ffffff66; color:var(--ink);
+  }
+  .quiz-option-row input[type="radio"]{ width:18px; height:18px; margin:0; flex-shrink:0; accent-color:var(--olive); }
+  .quiz-option-row .qr-label{ font-family:'Montserrat',Arial,sans-serif; font-size:9.5px; color:var(--ink-soft); text-align:center; width:34px; flex-shrink:0; line-height:1.2; }
+  .quiz-note{ font-size:11px; color:var(--ink-soft); font-style:italic; margin-top:2px; }
+
+  /* confetti celebration */
+  .confetti-layer{ position:fixed; inset:0; pointer-events:none; z-index:500; overflow:hidden; }
+  .confetti-piece{
+    position:absolute; width:8px; height:14px; border-radius:2px; opacity:.95;
+    animation-name:confetti-fall; animation-timing-function:cubic-bezier(.15,.6,.4,1); animation-fill-mode:forwards;
+  }
+  @keyframes confetti-fall{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
+    100%{ transform:translate(var(--dx,0px), 78vh) rotate(var(--rot,360deg)); opacity:0; }
+  }
 </style>
 </head>
 <body>
@@ -936,6 +999,7 @@
             <option value="Question">Question</option>
             <option value="Résumé de livre">Résumé de livre</option>
             <option value="Citation">Citation</option>
+            <option value="Quiz">Quiz</option>
             <option value="Note">Note libre</option>
           </select>
           <div class="compose-type-help">Le type donne un cadre visuel, mais le contenu reste libre.</div>
@@ -950,9 +1014,41 @@
             </div>
             <div class="schema-note">Le schéma reste personnalisable : tu peux laisser un bloc vide.</div>
           </div>
+
+          <div class="quiz-builder" id="quiz-builder">
+            <span class="field-label">Question (affichée au recto)</span>
+            <textarea id="quiz-question" placeholder="Ex. Quelle est la capitale de l'Australie ?" style="min-height:70px;"></textarea>
+            <span class="field-label">Réponses possibles — cochez la bonne</span>
+            <div class="quiz-option-row">
+              <input type="radio" name="quiz-correct-radio" value="0" checked>
+              <span class="qr-label">Bonne réponse</span>
+              <input type="text" id="quiz-option-0" placeholder="Réponse A">
+            </div>
+            <div class="quiz-option-row">
+              <input type="radio" name="quiz-correct-radio" value="1">
+              <span class="qr-label">Bonne réponse</span>
+              <input type="text" id="quiz-option-1" placeholder="Réponse B">
+            </div>
+            <div class="quiz-option-row">
+              <input type="radio" name="quiz-correct-radio" value="2">
+              <span class="qr-label">Bonne réponse</span>
+              <input type="text" id="quiz-option-2" placeholder="Réponse C (optionnel)">
+            </div>
+            <div class="quiz-option-row">
+              <input type="radio" name="quiz-correct-radio" value="3">
+              <span class="qr-label">Bonne réponse</span>
+              <input type="text" id="quiz-option-3" placeholder="Réponse D (optionnel)">
+            </div>
+            <div class="quiz-note">Au moins deux réponses, et le rond coché indique la bonne.</div>
+            <span class="field-label" style="margin-top:12px;">Développement (affiché au verso, quand on retourne la fiche)</span>
+            <textarea id="quiz-explanation" placeholder="Expliquez ici pourquoi c'est la bonne réponse…" style="min-height:100px;"></textarea>
+          </div>
         </div>
-        <span class="field-label">Titre</span>
-        <input type="text" id="compose-title" placeholder="Le titre de votre fiche">
+
+        <div id="compose-title-group">
+          <span class="field-label">Titre</span>
+          <input type="text" id="compose-title" placeholder="Le titre de votre fiche">
+        </div>
 
         <div style="display:flex; gap:10px; margin-bottom:14px;">
           <div style="flex:1;">
@@ -973,40 +1069,46 @@
           </div>
         </div>
 
-        <span class="field-label">Image <span style="opacity:0.6;">(optionnel — les PNG à fond transparent sont conservés)</span></span>
-        <label class="file-btn" for="compose-image-file">Choisir une image</label>
-        <input type="file" id="compose-image-file" accept="image/*" style="display:none;">
-        <img id="compose-image-preview" class="compose-preview" alt="Aperçu de l'image" style="object-fit:contain; background:repeating-conic-gradient(#00000012 0% 25%, transparent 0% 50%) 50% / 18px 18px;">
-        <button type="button" class="btn" id="compose-image-remove" style="display:none; margin:-4px 0 12px;">Retirer l'image</button>
-        <div id="compose-image-size-row" style="display:none; margin:-4px 0 14px;">
-          <span class="field-label">Taille de l'image : <span id="compose-image-size-label">60%</span></span>
-          <input type="range" id="compose-image-size" min="15" max="100" step="5" value="60" style="width:100%;">
+        <div id="compose-image-group">
+          <span class="field-label">Image <span style="opacity:0.6;">(optionnel — les PNG à fond transparent sont conservés)</span></span>
+          <label class="file-btn" for="compose-image-file">Choisir une image</label>
+          <input type="file" id="compose-image-file" accept="image/*" style="display:none;">
+          <img id="compose-image-preview" class="compose-preview" alt="Aperçu de l'image" style="object-fit:contain; background:repeating-conic-gradient(#00000012 0% 25%, transparent 0% 50%) 50% / 18px 18px;">
+          <button type="button" class="btn" id="compose-image-remove" style="display:none; margin:-4px 0 12px;">Retirer l'image</button>
+          <div id="compose-image-size-row" style="display:none; margin:-4px 0 14px;">
+            <span class="field-label">Taille de l'image : <span id="compose-image-size-label">60%</span></span>
+            <input type="range" id="compose-image-size" min="15" max="100" step="5" value="60" style="width:100%;">
+          </div>
         </div>
 
-        <span class="field-label">Texte</span>
-        <div class="text-toolbar">
-          <button type="button" class="tb-btn" data-action="bold" title="Gras"><strong>G</strong></button>
-          <button type="button" class="tb-btn" data-action="italic" title="Italique"><em>I</em></button>
-          <button type="button" class="tb-btn" data-action="highlight" title="Surligner">Surligner</button>
-          <button type="button" class="tb-btn" data-action="newline" title="Aller à la ligne">↵ Ligne</button>
-          <button type="button" class="tb-btn" data-action="space" title="Espacement">␣ Espace</button>
+        <div id="compose-text-group">
+          <span class="field-label">Texte</span>
+          <div class="text-toolbar">
+            <button type="button" class="tb-btn" data-action="bold" title="Gras"><strong>G</strong></button>
+            <button type="button" class="tb-btn" data-action="italic" title="Italique"><em>I</em></button>
+            <button type="button" class="tb-btn" data-action="highlight" title="Surligner">Surligner</button>
+            <button type="button" class="tb-btn" data-action="newline" title="Aller à la ligne">↵ Ligne</button>
+            <button type="button" class="tb-btn" data-action="space" title="Espacement">␣ Espace</button>
+          </div>
+          <textarea id="compose-text" placeholder="Votre idée, expliquée en quelques phrases…" style="min-height:140px;"></textarea>
         </div>
-        <textarea id="compose-text" placeholder="Votre idée, expliquée en quelques phrases…" style="min-height:140px;"></textarea>
 
         <span class="field-label">Source <span style="opacity:0.6;">(optionnel)</span></span>
         <input type="text" id="compose-source" placeholder="Livre, article, lien ou référence…">
 
         <span class="field-label">Légende <span style="opacity:0.6;">(optionnel — remplace votre nom en signature)</span></span>
         <input type="text" id="compose-legend" placeholder="Vous">
-        <label style="display:flex; align-items:center; gap:8px; font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:var(--ink-soft); cursor:pointer; margin-bottom:10px;">
-          <input type="checkbox" id="compose-has-back" style="width:16px; height:16px; margin:0;">
-          Ajouter un verso (texte) pour pouvoir retourner la fiche
-        </label>
-        <div id="compose-back-fields" style="display:none; padding:12px; border:1px solid var(--rule); border-radius:6px; margin-bottom:14px; background:#ffffff30;">
-          <span class="field-label">Titre du verso <span style="opacity:0.6;">(optionnel)</span></span>
-          <input type="text" id="compose-back-title" placeholder="Titre au verso">
-          <span class="field-label">Texte du verso</span>
-          <textarea id="compose-back-text" placeholder="Le contenu affiché quand on retourne la fiche…" style="min-height:110px; margin-bottom:0;"></textarea>
+        <div id="compose-back-toggle-group">
+          <label style="display:flex; align-items:center; gap:8px; font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:var(--ink-soft); cursor:pointer; margin-bottom:10px;">
+            <input type="checkbox" id="compose-has-back" style="width:16px; height:16px; margin:0;">
+            Ajouter un verso (texte) pour pouvoir retourner la fiche
+          </label>
+          <div id="compose-back-fields" style="display:none; padding:12px; border:1px solid var(--rule); border-radius:6px; margin-bottom:14px; background:#ffffff30;">
+            <span class="field-label">Titre du verso <span style="opacity:0.6;">(optionnel)</span></span>
+            <input type="text" id="compose-back-title" placeholder="Titre au verso">
+            <span class="field-label">Texte du verso</span>
+            <textarea id="compose-back-text" placeholder="Le contenu affiché quand on retourne la fiche…" style="min-height:110px; margin-bottom:0;"></textarea>
+          </div>
         </div>
 
         <span class="field-label">Dossier</span>
@@ -1094,7 +1196,7 @@
   const $ = (s, r=document) => r.querySelector(s);
   const $$ = (s, r=document) => [...r.querySelectorAll(s)];
   const feed=$('#feed'), nav=$('#nav'), hint=$('#hint');
-  const KEYS={posts:'marges:v5:posts',favorites:'marges:v5:favorites',profile:'marges:v5:profile',messages:'marges:v5:messages',settings:'marges:v5:settings',folders:'marges:v5:folders',folderMap:'marges:v5:folderMap',deletedCards:'marges:v5:deletedCards',covers:'marges:v5:covers'};
+  const KEYS={posts:'marges:v5:posts',favorites:'marges:v5:favorites',profile:'marges:v5:profile',messages:'marges:v5:messages',settings:'marges:v5:settings',folders:'marges:v5:folders',folderMap:'marges:v5:folderMap',deletedCards:'marges:v5:deletedCards',covers:'marges:v5:covers',quizAnswers:'marges:v5:quizAnswers'};
   const store={
     get(k,fallback=null){try{const v=localStorage.getItem(k);return v===null?fallback:JSON.parse(v)}catch(e){return fallback}},
     set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast('Stockage local saturé — exportez vos données.');return false}},
@@ -1107,6 +1209,7 @@
   let folderMap=store.get(KEYS.folderMap,{});
   let deletedCards=new Set(store.get(KEYS.deletedCards,[]));
   let covers=store.get(KEYS.covers,{});
+  let quizAnswers=store.get(KEYS.quizAnswers,{});
   let io=null, currentContact=null, composeMode='photo', pendingFront=null, pendingBack=null, pendingImage=null, editingPostId=null;
   let libraryFolder='all';
 
@@ -1115,6 +1218,34 @@
   function formatBody(str){let safe=escapeHtml(str);safe=safe.replace(/\*\*(.+?)\*\*/gs,'<strong>$1</strong>');safe=safe.replace(/_(.+?)_/gs,'<em>$1</em>');safe=safe.replace(/==(.+?)==/gs,'<mark>$1</mark>');return safe.replace(/\n/g,'<br>')}
   function persistFavorites(){store.set(KEYS.favorites,[...favorites])}
   function saveFolders(){store.set(KEYS.folders,folders);store.set(KEYS.folderMap,folderMap)}
+  function saveQuizAnswers(){store.set(KEYS.quizAnswers,quizAnswers)}
+
+  // ---- confetti celebration ----
+  function launchConfetti(fromEl){
+    const colors=['#A8B58A','#F7C8D3','#B46A72','#A9B7C6','#8FA05C'];
+    let originX=window.innerWidth/2, originTop=window.innerHeight*0.25;
+    if(fromEl){ const r=fromEl.getBoundingClientRect(); originX=r.left+r.width/2; originTop=r.top; }
+    const layer=document.createElement('div'); layer.className='confetti-layer'; document.body.appendChild(layer);
+    const count=30;
+    for(let i=0;i<count;i++){
+      const p=document.createElement('span'); p.className='confetti-piece';
+      const dx=(Math.random()*220-110);
+      const rot=(Math.random()*640-320)+'deg';
+      const size=6+Math.random()*6;
+      p.style.left=(originX+(Math.random()*160-80))+'px';
+      p.style.top=originTop+'px';
+      p.style.width=size+'px'; p.style.height=(size*1.7)+'px';
+      p.style.background=colors[i%colors.length];
+      p.style.borderRadius=(Math.random()<0.4)?'50%':'2px';
+      p.style.setProperty('--dx',dx+'px');
+      p.style.setProperty('--rot',rot);
+      p.style.animationDuration=(850+Math.random()*650)+'ms';
+      p.style.animationDelay=(Math.random()*120)+'ms';
+      layer.appendChild(p);
+    }
+    setTimeout(()=>layer.remove(),1900);
+  }
+
   function renderFolderControls(){
     const bar=$('#folder-bar'); if(!bar)return;
     bar.querySelectorAll('.folder-chip').forEach(x=>x.remove());
@@ -1193,20 +1324,70 @@
   }
   feed.addEventListener('scroll',()=>{ clearTimeout(feed._t); feed._t=setTimeout(syncLikeCurrentButton,120); });
 
+  // ---- quiz interaction ----
+  function applyQuizAnswerState(wrap,post,chosenIndex,animate){
+    const buttons=$$('.quiz-option-btn',wrap);
+    wrap.classList.add('answered');
+    buttons.forEach(btn=>{
+      const idx=parseInt(btn.dataset.index,10);
+      const isCorrect=post.quizOptions[idx]&&post.quizOptions[idx].correct;
+      btn.classList.remove('correct','incorrect');
+      if(isCorrect) btn.classList.add('correct');
+      else if(idx===chosenIndex) btn.classList.add('incorrect');
+    });
+    const feedback=$('.quiz-feedback',wrap.parentElement);
+    const chosenCorrect=post.quizOptions[chosenIndex]&&post.quizOptions[chosenIndex].correct;
+    if(feedback){
+      feedback.classList.remove('is-correct','is-incorrect');
+      if(chosenCorrect){feedback.textContent='Bonne réponse !';feedback.classList.add('is-correct')}
+      else{feedback.textContent='Pas tout à fait — la bonne réponse est en vert.';feedback.classList.add('is-incorrect')}
+    }
+    if(chosenCorrect&&animate) launchConfetti(wrap);
+  }
+  document.addEventListener('click',e=>{
+    const optBtn=e.target.closest('.quiz-option-btn'); if(!optBtn) return;
+    const wrap=optBtn.closest('.quiz-options'); if(!wrap||wrap.classList.contains('answered')) return;
+    const slot=optBtn.closest('.card-slot'); const postId=slot?.dataset.cardId; if(!postId) return;
+    const post=posts.find(p=>p.id===postId); if(!post||!post.quizOptions) return;
+    const chosenIndex=parseInt(optBtn.dataset.index,10);
+    quizAnswers[postId]=chosenIndex; saveQuizAnswers();
+    applyQuizAnswerState(wrap,post,chosenIndex,true);
+  });
+
   // Compose
   const composeOverlay=$('#compose-overlay'), composeFileFront=$('#compose-file-front'), composeFileBack=$('#compose-file-back'), composePreviewFront=$('#compose-preview-front'), composePreviewBack=$('#compose-preview-back'), composePhotoFields=$('#compose-photo-fields'), composeTextFields=$('#compose-text-fields'), composeTitle=$('#compose-title'), composeText=$('#compose-text'), composeSource=$('#compose-source'), composeLegend=$('#compose-legend'), composeType=$('#compose-type'), composeFolder=$('#compose-folder'), composeTitleSize=$('#compose-title-size'), composeTextSize=$('#compose-text-size'), composeImageFile=$('#compose-image-file'), composeImagePreview=$('#compose-image-preview'), composeImageRemove=$('#compose-image-remove'), composeImageSizeRow=$('#compose-image-size-row'), composeImageSize=$('#compose-image-size'), composeImageSizeLabel=$('#compose-image-size-label'), composeHasBack=$('#compose-has-back'), composeBackFields=$('#compose-back-fields'), composeBackTitle=$('#compose-back-title'), composeBackText=$('#compose-back-text'), schemaBuilder=$('#schema-builder'), schemaNode1=$('#schema-node-1'), schemaNode2=$('#schema-node-2'), schemaNode3=$('#schema-node-3'), composeSubmit=$('#compose-submit');
+  const quizBuilder=$('#quiz-builder'), quizQuestionEl=$('#quiz-question'), quizExplanationEl=$('#quiz-explanation'), quizOptionInputs=[$('#quiz-option-0'),$('#quiz-option-1'),$('#quiz-option-2'),$('#quiz-option-3')];
+  const composeTitleGroup=$('#compose-title-group'), composeTextGroup=$('#compose-text-group'), composeImageGroup=$('#compose-image-group'), composeBackToggleGroup=$('#compose-back-toggle-group');
   function insertAtCursor(textarea,text){const s=textarea.selectionStart,e=textarea.selectionEnd,v=textarea.value;textarea.value=v.slice(0,s)+text+v.slice(e);textarea.selectionStart=textarea.selectionEnd=s+text.length;textarea.focus()}
   function wrapSelection(textarea,before,after){const s=textarea.selectionStart,e=textarea.selectionEnd,v=textarea.value,sel=v.slice(s,e)||'texte';textarea.value=v.slice(0,s)+before+sel+after+v.slice(e);textarea.selectionStart=s+before.length;textarea.selectionEnd=s+before.length+sel.length;textarea.focus()}
   $$('.tb-btn').forEach(btn=>btn.addEventListener('click',()=>{const a=btn.dataset.action;if(a==='bold')wrapSelection(composeText,'**','**');else if(a==='italic')wrapSelection(composeText,'_','_');else if(a==='highlight')wrapSelection(composeText,'==','==');else if(a==='newline')insertAtCursor(composeText,'\n');else if(a==='space')insertAtCursor(composeText,'\n\n');updateSubmitState()}));
-  function updateSchemaVisibility(){schemaBuilder.classList.toggle('open',composeMode==='text'&&composeType.value==='Schéma')}
+  function isQuizType(){return composeType.value==='Quiz'}
+  function updateSchemaVisibility(){
+    schemaBuilder.classList.toggle('open',composeMode==='text'&&composeType.value==='Schéma');
+    quizBuilder.classList.toggle('open',composeMode==='text'&&isQuizType());
+    const hideForQuiz=composeMode==='text'&&isQuizType();
+    composeTitleGroup.style.display=hideForQuiz?'none':'block';
+    composeTextGroup.style.display=hideForQuiz?'none':'block';
+    composeImageGroup.style.display=hideForQuiz?'none':'block';
+    composeBackToggleGroup.style.display=hideForQuiz?'none':'block';
+  }
   composeType.addEventListener('change',()=>{updateSchemaVisibility();updateSubmitState()});
   [schemaNode1,schemaNode2,schemaNode3].forEach(x=>x.addEventListener('input',updateSubmitState));
-  $$('.mode-btn').forEach(btn=>btn.addEventListener('click',()=>{composeMode=btn.dataset.mode;$$('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));composePhotoFields.style.display=composeMode==='photo'?'block':'none';composeTextFields.style.display=composeMode==='text'?'block':'none';updateSubmitState()}));
-  function updateSubmitState(){composeSubmit.disabled=composeMode==='photo'?!pendingFront:!composeText.value.trim()}
+  [quizQuestionEl,quizExplanationEl,...quizOptionInputs].forEach(x=>x.addEventListener('input',updateSubmitState));
+  $$('.mode-btn').forEach(btn=>btn.addEventListener('click',()=>{composeMode=btn.dataset.mode;$$('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));composePhotoFields.style.display=composeMode==='photo'?'block':'none';composeTextFields.style.display=composeMode==='text'?'block':'none';updateSchemaVisibility();updateSubmitState()}));
+  function updateSubmitState(){
+    if(composeMode==='photo'){composeSubmit.disabled=!pendingFront;return}
+    if(isQuizType()){
+      const filled=quizOptionInputs.filter(inp=>inp.value.trim());
+      composeSubmit.disabled=!(quizQuestionEl.value.trim()&&filled.length>=2);
+      return;
+    }
+    composeSubmit.disabled=!composeText.value.trim();
+  }
   composeText.addEventListener('input',updateSubmitState);composeTitle.addEventListener('input',updateSubmitState);
   $('#compose-btn').addEventListener('click',()=>{editingPostId=null;composeSubmit.textContent='Publier';populateComposeFolders();updateSchemaVisibility();composeOverlay.classList.add('open')});
   $('#compose-close').addEventListener('click',closeCompose);$('#compose-cancel').addEventListener('click',closeCompose);
-  function closeCompose(){composeOverlay.classList.remove('open');composeFileFront.value='';composeFileBack.value='';composePreviewFront.style.display='none';composePreviewBack.style.display='none';composeTitle.value='';composeText.value='';composeSource.value='';composeLegend.value='';composeType.value='Concept';composeFolder.value='';composeTitleSize.value='36';composeTextSize.value='18';composeImageFile.value='';composeImagePreview.src='';composeImagePreview.style.display='none';composeImageRemove.style.display='none';composeImageSizeRow.style.display='none';composeImageSize.value='60';composeImageSizeLabel.textContent='60%';pendingImage=null;composeHasBack.checked=false;composeBackFields.style.display='none';composeBackTitle.value='';composeBackText.value='';schemaNode1.value='';schemaNode2.value='';schemaNode3.value='';updateSchemaVisibility();pendingFront=pendingBack=null;editingPostId=null;composeSubmit.textContent='Publier';composeSubmit.disabled=true}
+  function closeCompose(){composeOverlay.classList.remove('open');composeFileFront.value='';composeFileBack.value='';composePreviewFront.style.display='none';composePreviewBack.style.display='none';composeTitle.value='';composeText.value='';composeSource.value='';composeLegend.value='';composeType.value='Concept';composeFolder.value='';composeTitleSize.value='36';composeTextSize.value='18';composeImageFile.value='';composeImagePreview.src='';composeImagePreview.style.display='none';composeImageRemove.style.display='none';composeImageSizeRow.style.display='none';composeImageSize.value='60';composeImageSizeLabel.textContent='60%';pendingImage=null;composeHasBack.checked=false;composeBackFields.style.display='none';composeBackTitle.value='';composeBackText.value='';schemaNode1.value='';schemaNode2.value='';schemaNode3.value='';quizQuestionEl.value='';quizExplanationEl.value='';quizOptionInputs.forEach(inp=>inp.value='');const firstRadio=document.querySelector('input[name="quiz-correct-radio"][value="0"]');if(firstRadio)firstRadio.checked=true;updateSchemaVisibility();pendingFront=pendingBack=null;editingPostId=null;composeSubmit.textContent='Publier';composeSubmit.disabled=true}
   function readAndResize(file,cb){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const maxW=1100,scale=Math.min(1,maxW/img.width),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.76))};img.src=e.target.result};r.readAsDataURL(file)}
   // Comme readAndResize, mais garde le canal alpha des PNG (fond transparent) au lieu de forcer du JPEG
   function readAndResizeKeepAlpha(file,cb){
@@ -1252,6 +1433,16 @@
   composeSubmit.addEventListener('click',()=>{
     let post;
     if(composeMode==='photo'){if(!pendingFront)return;post={id:editingPostId||'post-'+Date.now(),type:'photo',cardType:'Photo',author:activeProfile,imageFront:pendingFront,imageBack:pendingBack,folderId:composeFolder.value||'',ts:Date.now()}}
+    else if(isQuizType()){
+      const question=quizQuestionEl.value.trim(); if(!question)return;
+      const correctRadio=document.querySelector('input[name="quiz-correct-radio"]:checked');
+      const correctIdx=correctRadio?parseInt(correctRadio.value,10):0;
+      const quizOptions=quizOptionInputs.map((inp,idx)=>({text:inp.value.trim(),correct:idx===correctIdx})).filter(o=>o.text);
+      if(quizOptions.length<2)return;
+      if(!quizOptions.some(o=>o.correct))quizOptions[0].correct=true;
+      const explanation=quizExplanationEl.value.trim();
+      post={id:editingPostId||'post-'+Date.now(),type:'text',cardType:'Quiz',category:'Quiz',author:activeProfile,quizQuestion:question,quizOptions,backTitle:'',backBody:explanation,titleSize:parseInt(composeTitleSize.value,10)||36,bodySize:parseInt(composeTextSize.value,10)||18,source:composeSource.value.trim(),legend:composeLegend.value.trim(),folderId:composeFolder.value||'',ts:Date.now()};
+    }
     else{const body=composeText.value.trim();if(!body)return;post={id:editingPostId||'post-'+Date.now(),type:'text',cardType:composeType.value,category:composeType.value,author:activeProfile,title:composeTitle.value.trim(),titleSize:parseInt(composeTitleSize.value,10)||36,bodySize:parseInt(composeTextSize.value,10)||18,image:pendingImage||null,imageSize:parseInt(composeImageSize.value,10)||60,backTitle:composeHasBack.checked?composeBackTitle.value.trim():'',backBody:composeHasBack.checked?composeBackText.value.trim():'',body,source:composeSource.value.trim(),legend:composeLegend.value.trim(),folderId:composeFolder.value||'',schema:composeType.value==='Schéma'?[schemaNode1.value.trim(),schemaNode2.value.trim(),schemaNode3.value.trim()]:null,ts:Date.now()}}
     if(editingPostId){posts=posts.map(p=>p.id===editingPostId?{...p,...post}:p)}else posts.unshift(post);
     if(!store.set(KEYS.posts,posts))return; if(post.folderId)folderMap[post.id]=post.folderId;else delete folderMap[post.id];saveFolders(); renderAllPosts(); closeCompose(); toast(editingPostId?'Fiche modifiée':'Fiche enregistrée sur cet appareil');
@@ -1259,10 +1450,25 @@
 
   function renderAllPosts(){$$('.card-slot[data-user-post="1"]').forEach(x=>x.remove());posts.slice().reverse().forEach(renderPost);identifyStaticCards();syncLikeButtons();rebuildFeedControls();renderLibrary()}
   const anchor=$('#user-posts-anchor');
+  const QUIZ_LETTERS=['A','B','C','D'];
   function renderPost(post){
     if(post.type==='photo'&&!post.imageFront&&post.image)post.imageFront=post.image;
-    const innerId='inner-'+post.id,section=document.createElement('section');section.className='card-slot';section.dataset.userPost='1';section.dataset.cardId=post.id;section.dataset.cardType=post.cardType||(post.type==='photo'?'Photo':'Note');section.dataset.cardTitle=post.title||post.cardType||'Publication';section.dataset.owner=post.author||'Vous';
+    const innerId='inner-'+post.id,section=document.createElement('section');section.className='card-slot';section.dataset.userPost='1';section.dataset.cardId=post.id;section.dataset.cardType=post.cardType||(post.type==='photo'?'Photo':'Note');section.dataset.cardTitle=post.title||post.quizQuestion||post.cardType||'Publication';section.dataset.owner=post.author||'Vous';
     let cardHtml='', hb=false;
+    if(post.cardType==='Quiz'&&Array.isArray(post.quizOptions)){
+      const alreadyAnswered=Object.prototype.hasOwnProperty.call(quizAnswers,post.id);
+      const optionsHtml=post.quizOptions.map((o,idx)=>`<button type="button" class="quiz-option-btn" data-index="${idx}"><span class="qo-letter">${QUIZ_LETTERS[idx]||idx+1}</span>${escapeHtml(o.text)}</button>`).join('');
+      const frontFace=`<div class="card front"><div class="card-tag-row"><span class="card-tag gold">Quiz</span><span class="card-index">Post</span></div><div class="card-body">${post.title?`<h1 class="title" style="font-size:${post.titleSize||36}px;">${escapeHtml(post.title)}</h1>`:''}<p class="lead" style="font-size:${post.bodySize||18}px;">${formatBody(post.quizQuestion)}</p><div class="quiz-feedback"></div><div class="quiz-options">${optionsHtml}</div>${post.source?`<div class="sources"><div class="sources-label">source</div><div class="post-source">${escapeHtml(post.source)}</div></div>`:''}<p class="quiz-hint">Choisissez une réponse, puis retournez la fiche pour le développement.</p><p class="example" style="margin-top:0;">${escapeHtml(post.legend||post.author)}</p></div></div>`;
+      hb=!!(post.backBody&&post.backBody.trim());
+      const backFace=hb?`<div class="card back"><div class="card-tag-row"><span class="card-tag back-tag">Développement</span><span class="card-index">Post</span></div><div class="card-body">${post.backTitle?`<h1 class="title" style="font-size:${post.titleSize||36}px;">${escapeHtml(post.backTitle)}</h1>`:''}<p class="lead" style="font-size:${post.bodySize||18}px;">${formatBody(post.backBody)}</p></div></div>`:'';
+      cardHtml=`<div class="card-inner" id="${innerId}">${frontFace}${backFace}</div>`;
+      section.innerHTML=`<div class="flip-container">${cardHtml}<div class="post-tools"><button class="post-tool-btn edit-post" title="Modifier">✎</button><button class="delete-btn" title="Supprimer"><svg viewBox="0 0 20 20"><path d="M4 5h12 M8 5V3h4v2 M6 5l1 12h6l1-12"/></svg></button></div>${hb?`<div class="card-controls"><button class="ctrl-btn flip-btn" data-target="${innerId}" aria-label="Retourner la fiche"><svg viewBox="0 0 20 20"><path d="M17 10a7 7 0 1 1-2-4.9M17 3v4h-4"/></svg></button></div>`:''}</div>`;
+      $('.delete-btn',section).addEventListener('click',()=>{if(confirm('Supprimer cette fiche ?')){posts=posts.filter(p=>p.id!==post.id);favorites.delete(post.id);delete folderMap[post.id];delete quizAnswers[post.id];if(!store.set(KEYS.posts,posts))return;saveFolders();saveQuizAnswers();persistFavorites();section.remove();rebuildFeedControls();renderLibrary();toast('Fiche supprimée')}});
+      $('.edit-post',section).addEventListener('click',()=>editPost(post));
+      anchor.after(section);
+      if(alreadyAnswered){ const wrap=$('.quiz-options',section); if(wrap) applyQuizAnswerState(wrap,post,quizAnswers[post.id],false); }
+      return;
+    }
     if(post.type==='text'){
       const schema=Array.isArray(post.schema)?post.schema.filter(Boolean):[];
       const schemaHtml=post.cardType==='Schéma'&&schema.length ? '<div class="schema-card">'+schema.map((n,i)=>(i?'<div class="schema-card-arrow">↓</div>':'')+'<div class="schema-card-node">'+escapeHtml(n)+'</div>').join('')+'</div>' : '';
@@ -1276,11 +1482,28 @@
     $('.delete-btn',section).addEventListener('click',()=>{if(confirm('Supprimer cette fiche ?')){posts=posts.filter(p=>p.id!==post.id);favorites.delete(post.id);delete folderMap[post.id];if(!store.set(KEYS.posts,posts))return;saveFolders();persistFavorites();section.remove();rebuildFeedControls();renderLibrary();toast('Fiche supprimée')}});
     $('.edit-post',section).addEventListener('click',()=>editPost(post));anchor.after(section);
   }
-  function editPost(post){editingPostId=post.id;composeOverlay.classList.add('open');composeSubmit.textContent='Enregistrer';if(post.type==='text'){composeMode='text';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='text'));composePhotoFields.style.display='none';composeTextFields.style.display='block';composeType.value=post.cardType||'Concept';composeTitle.value=post.title||'';composeTitleSize.value=String(post.titleSize||36);composeTextSize.value=String(post.bodySize||18);composeText.value=post.body||'';composeSource.value=post.source||'';composeLegend.value=post.legend||'';if(post.image){pendingImage=post.image;composeImagePreview.src=post.image;composeImagePreview.style.display='block';composeImageRemove.style.display='inline-block';composeImageSizeRow.style.display='block';composeImageSize.value=String(post.imageSize||60);composeImageSizeLabel.textContent=(post.imageSize||60)+'%'}else{pendingImage=null;composeImagePreview.src='';composeImagePreview.style.display='none';composeImageRemove.style.display='none';composeImageSizeRow.style.display='none';composeImageSize.value='60';composeImageSizeLabel.textContent='60%'}const hasBack=!!(post.backBody&&post.backBody.trim());composeHasBack.checked=hasBack;composeBackFields.style.display=hasBack?'block':'none';composeBackTitle.value=post.backTitle||'';composeBackText.value=post.backBody||'';populateComposeFolders(post.folderId||folderMap[post.id]||'');const sc=Array.isArray(post.schema)?post.schema:[];schemaNode1.value=sc[0]||'';schemaNode2.value=sc[1]||'';schemaNode3.value=sc[2]||'';updateSchemaVisibility()}else{composeMode='photo';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='photo'));composePhotoFields.style.display='block';composeTextFields.style.display='none';pendingFront=post.imageFront;pendingBack=post.imageBack||null;composePreviewFront.src=pendingFront;composePreviewFront.style.display='block';if(pendingBack){composePreviewBack.src=pendingBack;composePreviewBack.style.display='block'}}updateSubmitState()}
+  function editPost(post){
+    editingPostId=post.id;composeOverlay.classList.add('open');composeSubmit.textContent='Enregistrer';
+    if(post.cardType==='Quiz'&&Array.isArray(post.quizOptions)){
+      composeMode='text';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='text'));composePhotoFields.style.display='none';composeTextFields.style.display='block';
+      composeType.value='Quiz';
+      quizQuestionEl.value=post.quizQuestion||'';
+      quizExplanationEl.value=post.backBody||'';
+      quizOptionInputs.forEach((inp,idx)=>{inp.value=post.quizOptions[idx]?post.quizOptions[idx].text:''});
+      const correctIdx=post.quizOptions.findIndex(o=>o.correct);
+      const radio=document.querySelector(`input[name="quiz-correct-radio"][value="${correctIdx>=0?correctIdx:0}"]`);
+      if(radio)radio.checked=true;
+      composeTitleSize.value=String(post.titleSize||36);composeTextSize.value=String(post.bodySize||18);
+      composeSource.value=post.source||'';composeLegend.value=post.legend||'';
+      populateComposeFolders(post.folderId||folderMap[post.id]||'');
+      updateSchemaVisibility();updateSubmitState();
+      return;
+    }
+    if(post.type==='text'){composeMode='text';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='text'));composePhotoFields.style.display='none';composeTextFields.style.display='block';composeType.value=post.cardType||'Concept';composeTitle.value=post.title||'';composeTitleSize.value=String(post.titleSize||36);composeTextSize.value=String(post.bodySize||18);composeText.value=post.body||'';composeSource.value=post.source||'';composeLegend.value=post.legend||'';if(post.image){pendingImage=post.image;composeImagePreview.src=post.image;composeImagePreview.style.display='block';composeImageRemove.style.display='inline-block';composeImageSizeRow.style.display='block';composeImageSize.value=String(post.imageSize||60);composeImageSizeLabel.textContent=(post.imageSize||60)+'%'}else{pendingImage=null;composeImagePreview.src='';composeImagePreview.style.display='none';composeImageRemove.style.display='none';composeImageSizeRow.style.display='none';composeImageSize.value='60';composeImageSizeLabel.textContent='60%'}const hasBack=!!(post.backBody&&post.backBody.trim());composeHasBack.checked=hasBack;composeBackFields.style.display=hasBack?'block':'none';composeBackTitle.value=post.backTitle||'';composeBackText.value=post.backBody||'';populateComposeFolders(post.folderId||folderMap[post.id]||'');const sc=Array.isArray(post.schema)?post.schema:[];schemaNode1.value=sc[0]||'';schemaNode2.value=sc[1]||'';schemaNode3.value=sc[2]||'';updateSchemaVisibility()}else{composeMode='photo';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='photo'));composePhotoFields.style.display='block';composeTextFields.style.display='none';pendingFront=post.imageFront;pendingBack=post.imageBack||null;composePreviewFront.src=pendingFront;composePreviewFront.style.display='block';if(pendingBack){composePreviewBack.src=pendingBack;composePreviewBack.style.display='block'}}updateSubmitState()}
 
   // Library / discovery
   const libraryOverlay=$('#library-overlay'), librarySearch=$('#library-search'), libraryResults=$('#library-results'), coverFileInput=$('#cover-file-input'); let libraryFilter='all', coverEditingId=null;
-  const COVER_COLORS={'Concept':'#8FA05C','Schéma':'#B49A46','Résumé de livre':'#B46A72','Citation':'#A9B7C6','Définition':'#7C9E9E','Question':'#9C7CA0','Note':'#8A8F98','Photo':'#2D3A47'};
+  const COVER_COLORS={'Concept':'#8FA05C','Schéma':'#B49A46','Résumé de livre':'#B46A72','Citation':'#A9B7C6','Définition':'#7C9E9E','Question':'#9C7CA0','Quiz':'#B49A46','Note':'#8A8F98','Photo':'#2D3A47'};
   function coverColorFor(type){return COVER_COLORS[type]||'#6B7A54'}
   function saveCovers(){store.set(KEYS.covers,covers)}
   function openLibrary(){libraryOverlay.classList.add('open');renderLibrary();setTimeout(()=>librarySearch.focus(),80)}
@@ -1326,8 +1549,8 @@
       if(!confirm('Supprimer cette fiche ?')) return;
       if(x.owner==='system'){ deletedCards.add(x.id); store.set(KEYS.deletedCards,[...deletedCards]); }
       else{ posts=posts.filter(p=>p.id!==x.id); store.set(KEYS.posts,posts); }
-      favorites.delete(x.id); delete folderMap[x.id]; delete covers[x.id];
-      saveFolders(); saveCovers(); persistFavorites();
+      favorites.delete(x.id); delete folderMap[x.id]; delete covers[x.id]; delete quizAnswers[x.id];
+      saveFolders(); saveCovers(); saveQuizAnswers(); persistFavorites();
       if(x.slot) x.slot.classList.add('deleted-card');
       renderAllPosts();
       toast('Fiche supprimée');
@@ -1397,8 +1620,8 @@
   })();
 
   // Export / import
-  $('#export-data').addEventListener('click',()=>{const payload={app:'Marges',version:5,exportedAt:new Date().toISOString(),posts,favorites:[...favorites],profile:activeProfile,messages:store.get(KEYS.messages,[]),settings:store.get(KEYS.settings,{}),folders,folderMap,deletedCards:[...deletedCards],covers};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='marges-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Sauvegarde exportée')});
-  $('#import-file').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=='Marges')throw 0;posts=Array.isArray(d.posts)?d.posts:[];favorites=new Set(Array.isArray(d.favorites)?d.favorites:[]);activeProfile=d.profile||'Vous';store.set(KEYS.posts,posts);persistFavorites();store.set(KEYS.profile,activeProfile);if(Array.isArray(d.messages))store.set(KEYS.messages,d.messages);if(d.settings)store.set(KEYS.settings,d.settings);folders=Array.isArray(d.folders)?d.folders:[];folderMap=d.folderMap&&typeof d.folderMap==='object'?d.folderMap:{};deletedCards=new Set(Array.isArray(d.deletedCards)?d.deletedCards:[]);store.set(KEYS.deletedCards,[...deletedCards]);covers=d.covers&&typeof d.covers==='object'?d.covers:{};saveCovers();saveFolders();$('#profile-name').textContent=activeProfile;renderAllPosts();renderFolderControls();renderLibrary();toast('Données importées')}catch(err){alert('Ce fichier ne semble pas être une sauvegarde Marges valide.')}};r.readAsText(f);e.target.value=''});
+  $('#export-data').addEventListener('click',()=>{const payload={app:'Marges',version:5,exportedAt:new Date().toISOString(),posts,favorites:[...favorites],profile:activeProfile,messages:store.get(KEYS.messages,[]),settings:store.get(KEYS.settings,{}),folders,folderMap,deletedCards:[...deletedCards],covers,quizAnswers};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='marges-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Sauvegarde exportée')});
+  $('#import-file').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=='Marges')throw 0;posts=Array.isArray(d.posts)?d.posts:[];favorites=new Set(Array.isArray(d.favorites)?d.favorites:[]);activeProfile=d.profile||'Vous';store.set(KEYS.posts,posts);persistFavorites();store.set(KEYS.profile,activeProfile);if(Array.isArray(d.messages))store.set(KEYS.messages,d.messages);if(d.settings)store.set(KEYS.settings,d.settings);folders=Array.isArray(d.folders)?d.folders:[];folderMap=d.folderMap&&typeof d.folderMap==='object'?d.folderMap:{};deletedCards=new Set(Array.isArray(d.deletedCards)?d.deletedCards:[]);store.set(KEYS.deletedCards,[...deletedCards]);covers=d.covers&&typeof d.covers==='object'?d.covers:{};saveCovers();quizAnswers=d.quizAnswers&&typeof d.quizAnswers==='object'?d.quizAnswers:{};saveQuizAnswers();saveFolders();$('#profile-name').textContent=activeProfile;renderAllPosts();renderFolderControls();renderLibrary();toast('Données importées')}catch(err){alert('Ce fichier ne semble pas être une sauvegarde Marges valide.')}};r.readAsText(f);e.target.value=''});
 
   // Profile + messages
   const profileNameEl=$('#profile-name');profileNameEl.textContent=activeProfile;$('#change-profile').addEventListener('click',()=>{const name=prompt('Nom du profil :',activeProfile);if(name&&name.trim()){activeProfile=name.trim();store.set(KEYS.profile,activeProfile);profileNameEl.textContent=activeProfile;renderContactList()}});
