@@ -595,8 +595,15 @@
     color:var(--olive-text); opacity:.85; text-align:center;
   }
 
+  .vocab-builder{ display:none; margin:4px 0 14px; padding:12px; border:1px solid var(--rule); border-radius:6px; background:#ffffff38; }
+  .vocab-builder.open{ display:block; }
   .quiz-builder{ display:none; margin:4px 0 14px; padding:12px; border:1px solid var(--rule); border-radius:6px; background:#ffffff38; }
   .quiz-builder.open{ display:block; }
+  .vocab-body{ text-align:center; }
+  .vocab-center{ flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; width:100%; }
+  .vocab-word{ text-align:center; margin:0; }
+  .vocab-image{ width:100%; display:flex; justify-content:center; }
+  .vocab-translation{ text-align:center; margin:0; }
   .quiz-builder textarea{
     width:100%; padding:10px; border:1px solid var(--rule); border-radius:4px;
     margin-bottom:12px; background:#ffffff66; color:var(--ink); font-family:'Instrument Serif',Georgia,serif; font-size:15px;
@@ -736,6 +743,7 @@
             <option value="Résumé de livre">Résumé de livre</option>
             <option value="Citation">Citation</option>
             <option value="Quiz">Quiz</option>
+            <option value="Vocabulaire">Vocabulaire</option>
             <option value="Note">Note libre</option>
           </select>
           <div class="compose-type-help">Le type donne un cadre visuel, mais le contenu reste libre.</div>
@@ -779,10 +787,16 @@
             <span class="field-label" style="margin-top:12px;">Développement (affiché au verso, quand on retourne la fiche)</span>
             <textarea id="quiz-explanation" placeholder="Expliquez ici pourquoi c'est la bonne réponse…" style="min-height:100px;"></textarea>
           </div>
+
+          <div class="vocab-builder" id="vocab-builder">
+            <div class="compose-type-help" style="margin:0 0 10px;">Le mot s'affiche au recto, la traduction apparaît quand on retourne la fiche.</div>
+            <span class="field-label">Traduction en français (affichée au verso)</span>
+            <textarea id="vocab-translation" placeholder="La traduction du mot en français…" style="min-height:90px;"></textarea>
+          </div>
         </div>
 
         <div id="compose-title-group">
-          <span class="field-label">Titre</span>
+          <span class="field-label" id="compose-title-label">Titre</span>
           <input type="text" id="compose-title" placeholder="Le titre de votre fiche">
         </div>
 
@@ -829,7 +843,7 @@
           <textarea id="compose-text" placeholder="Votre idée, expliquée en quelques phrases…" style="min-height:140px;"></textarea>
         </div>
 
-        <span class="field-label">Source <span style="opacity:0.6;">(optionnel)</span></span>
+        <span class="field-label"><span id="compose-source-label">Source</span> <span id="compose-source-optional" style="opacity:0.6;">(optionnel)</span></span>
         <input type="text" id="compose-source" placeholder="Livre, article, lien ou référence…">
 
         <span class="field-label">Légende <span style="opacity:0.6;">(optionnel — remplace votre nom en signature)</span></span>
@@ -1294,19 +1308,36 @@
   // Compose
   const composeOverlay=$('#compose-overlay'), composeFileFront=$('#compose-file-front'), composeFileBack=$('#compose-file-back'), composePreviewFront=$('#compose-preview-front'), composePreviewBack=$('#compose-preview-back'), composePhotoFields=$('#compose-photo-fields'), composeTextFields=$('#compose-text-fields'), composeTitle=$('#compose-title'), composeText=$('#compose-text'), composeSource=$('#compose-source'), composeLegend=$('#compose-legend'), composeType=$('#compose-type'), composeFolder=$('#compose-folder'), composeTitleSize=$('#compose-title-size'), composeTextSize=$('#compose-text-size'), composeImageFile=$('#compose-image-file'), composeImagePreview=$('#compose-image-preview'), composeImageRemove=$('#compose-image-remove'), composeImageSizeRow=$('#compose-image-size-row'), composeImageSize=$('#compose-image-size'), composeImageSizeLabel=$('#compose-image-size-label'), composeHasBack=$('#compose-has-back'), composeBackFields=$('#compose-back-fields'), composeBackTitle=$('#compose-back-title'), composeBackText=$('#compose-back-text'), schemaBuilder=$('#schema-builder'), schemaNode1=$('#schema-node-1'), schemaNode2=$('#schema-node-2'), schemaNode3=$('#schema-node-3'), composeSubmit=$('#compose-submit');
   const quizBuilder=$('#quiz-builder'), quizQuestionEl=$('#quiz-question'), quizExplanationEl=$('#quiz-explanation'), quizOptionInputs=[$('#quiz-option-0'),$('#quiz-option-1'),$('#quiz-option-2'),$('#quiz-option-3')];
+  const vocabBuilder=$('#vocab-builder'), vocabTranslation=$('#vocab-translation'), composeTitleLabel=$('#compose-title-label'), composeSourceLabel=$('#compose-source-label'), composeSourceOptional=$('#compose-source-optional');
   const composeTitleGroup=$('#compose-title-group'), composeTextGroup=$('#compose-text-group'), composeImageGroup=$('#compose-image-group'), composeBackToggleGroup=$('#compose-back-toggle-group');
   function insertAtCursor(textarea,text){const s=textarea.selectionStart,e=textarea.selectionEnd,v=textarea.value;textarea.value=v.slice(0,s)+text+v.slice(e);textarea.selectionStart=textarea.selectionEnd=s+text.length;textarea.focus()}
   function wrapSelection(textarea,before,after){const s=textarea.selectionStart,e=textarea.selectionEnd,v=textarea.value,sel=v.slice(s,e)||'texte';textarea.value=v.slice(0,s)+before+sel+after+v.slice(e);textarea.selectionStart=s+before.length;textarea.selectionEnd=s+before.length+sel.length;textarea.focus()}
   $$('.tb-btn').forEach(btn=>btn.addEventListener('click',()=>{const a=btn.dataset.action;if(a==='bold')wrapSelection(composeText,'**','**');else if(a==='italic')wrapSelection(composeText,'_','_');else if(a==='highlight')wrapSelection(composeText,'==','==');else if(a==='newline')insertAtCursor(composeText,'\n');else if(a==='space')insertAtCursor(composeText,'\n\n');updateSubmitState()}));
   function isQuizType(){return composeType.value==='Quiz'}
+  function isVocabType(){return composeType.value==='Vocabulaire'}
   function updateSchemaVisibility(){
     schemaBuilder.classList.toggle('open',composeMode==='text'&&composeType.value==='Schéma');
     quizBuilder.classList.toggle('open',composeMode==='text'&&isQuizType());
+    vocabBuilder.classList.toggle('open',composeMode==='text'&&isVocabType());
     const hideForQuiz=composeMode==='text'&&isQuizType();
+    const hideForVocab=composeMode==='text'&&isVocabType();
     composeTitleGroup.style.display=hideForQuiz?'none':'block';
-    composeTextGroup.style.display=hideForQuiz?'none':'block';
+    composeTextGroup.style.display=(hideForQuiz||hideForVocab)?'none':'block';
     composeImageGroup.style.display=hideForQuiz?'none':'block';
-    composeBackToggleGroup.style.display=hideForQuiz?'none':'block';
+    composeBackToggleGroup.style.display=(hideForQuiz||hideForVocab)?'none':'block';
+    if(hideForVocab){
+      composeTitleLabel.textContent='Mot';
+      composeTitle.placeholder='Le mot dans la langue (ex : Apple)';
+      composeSourceLabel.textContent='Langue';
+      composeSourceOptional.style.display='none';
+      composeSource.placeholder='Nom de la langue (ex : Anglais)';
+    }else{
+      composeTitleLabel.textContent='Titre';
+      composeTitle.placeholder='Le titre de votre fiche';
+      composeSourceLabel.textContent='Source';
+      composeSourceOptional.style.display='inline';
+      composeSource.placeholder='Livre, article, lien ou référence…';
+    }
   }
   composeType.addEventListener('change',()=>{updateSchemaVisibility();updateSubmitState()});
   [schemaNode1,schemaNode2,schemaNode3].forEach(x=>x.addEventListener('input',updateSubmitState));
@@ -1319,12 +1350,17 @@
       composeSubmit.disabled=!(quizQuestionEl.value.trim()&&filled.length>=2);
       return;
     }
+    if(isVocabType()){
+      composeSubmit.disabled=!(composeTitle.value.trim()&&vocabTranslation.value.trim());
+      return;
+    }
     composeSubmit.disabled=!composeText.value.trim();
   }
+  vocabTranslation.addEventListener('input',updateSubmitState);
   composeText.addEventListener('input',updateSubmitState);composeTitle.addEventListener('input',updateSubmitState);
   $('#compose-btn').addEventListener('click',()=>{editingPostId=null;composeSubmit.textContent='Publier';populateComposeFolders();updateSchemaVisibility();composeOverlay.classList.add('open')});
   $('#compose-close').addEventListener('click',closeCompose);$('#compose-cancel').addEventListener('click',closeCompose);
-  function closeCompose(){composeOverlay.classList.remove('open');composeFileFront.value='';composeFileBack.value='';composePreviewFront.style.display='none';composePreviewBack.style.display='none';composeTitle.value='';composeText.value='';composeSource.value='';composeLegend.value='';composeType.value='Concept';composeFolder.value='';composeTitleSize.value='36';composeTextSize.value='18';composeImageFile.value='';composeImagePreview.src='';composeImagePreview.style.display='none';composeImageRemove.style.display='none';composeImageSizeRow.style.display='none';composeImageSize.value='60';composeImageSizeLabel.textContent='60%';pendingImage=null;composeHasBack.checked=false;composeBackFields.style.display='none';composeBackTitle.value='';composeBackText.value='';schemaNode1.value='';schemaNode2.value='';schemaNode3.value='';quizQuestionEl.value='';quizExplanationEl.value='';quizOptionInputs.forEach(inp=>inp.value='');const firstRadio=document.querySelector('input[name="quiz-correct-radio"][value="0"]');if(firstRadio)firstRadio.checked=true;updateSchemaVisibility();pendingFront=pendingBack=null;editingPostId=null;composeSubmit.textContent='Publier';composeSubmit.disabled=true}
+  function closeCompose(){composeOverlay.classList.remove('open');composeFileFront.value='';composeFileBack.value='';composePreviewFront.style.display='none';composePreviewBack.style.display='none';composeTitle.value='';composeText.value='';composeSource.value='';composeLegend.value='';composeType.value='Concept';composeFolder.value='';composeTitleSize.value='36';composeTextSize.value='18';composeImageFile.value='';composeImagePreview.src='';composeImagePreview.style.display='none';composeImageRemove.style.display='none';composeImageSizeRow.style.display='none';composeImageSize.value='60';composeImageSizeLabel.textContent='60%';pendingImage=null;composeHasBack.checked=false;composeBackFields.style.display='none';composeBackTitle.value='';composeBackText.value='';schemaNode1.value='';schemaNode2.value='';schemaNode3.value='';quizQuestionEl.value='';quizExplanationEl.value='';quizOptionInputs.forEach(inp=>inp.value='');vocabTranslation.value='';const firstRadio=document.querySelector('input[name="quiz-correct-radio"][value="0"]');if(firstRadio)firstRadio.checked=true;updateSchemaVisibility();pendingFront=pendingBack=null;editingPostId=null;composeSubmit.textContent='Publier';composeSubmit.disabled=true}
   function readAndResize(file,cb){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const maxW=1100,scale=Math.min(1,maxW/img.width),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.76))};img.src=e.target.result};r.readAsDataURL(file)}
   // Comme readAndResize, mais garde le canal alpha des PNG (fond transparent) au lieu de forcer du JPEG
   function readAndResizeKeepAlpha(file,cb){
@@ -1380,6 +1416,11 @@
       const explanation=quizExplanationEl.value.trim();
       post={id:editingPostId||'post-'+Date.now(),type:'text',cardType:'Quiz',category:'Quiz',author:activeProfile,quizQuestion:question,quizOptions,backTitle:'',backBody:explanation,titleSize:parseInt(composeTitleSize.value,10)||36,bodySize:parseInt(composeTextSize.value,10)||18,source:composeSource.value.trim(),legend:composeLegend.value.trim(),folderId:composeFolder.value||'',ts:Date.now()};
     }
+    else if(isVocabType()){
+      const word=composeTitle.value.trim(); if(!word)return;
+      const translation=vocabTranslation.value.trim(); if(!translation)return;
+      post={id:editingPostId||'post-'+Date.now(),type:'text',cardType:'Vocabulaire',category:'Vocabulaire',author:activeProfile,title:word,titleSize:parseInt(composeTitleSize.value,10)||46,bodySize:parseInt(composeTextSize.value,10)||20,image:pendingImage||null,imageSize:parseInt(composeImageSize.value,10)||60,backTitle:'',backBody:translation,source:composeSource.value.trim(),legend:composeLegend.value.trim(),folderId:composeFolder.value||'',schema:null,ts:Date.now()};
+    }
     else{const body=composeText.value.trim();if(!body)return;post={id:editingPostId||'post-'+Date.now(),type:'text',cardType:composeType.value,category:composeType.value,author:activeProfile,title:composeTitle.value.trim(),titleSize:parseInt(composeTitleSize.value,10)||36,bodySize:parseInt(composeTextSize.value,10)||18,image:pendingImage||null,imageSize:parseInt(composeImageSize.value,10)||60,backTitle:composeHasBack.checked?composeBackTitle.value.trim():'',backBody:composeHasBack.checked?composeBackText.value.trim():'',body,source:composeSource.value.trim(),legend:composeLegend.value.trim(),folderId:composeFolder.value||'',schema:composeType.value==='Schéma'?[schemaNode1.value.trim(),schemaNode2.value.trim(),schemaNode3.value.trim()]:null,ts:Date.now()}}
     if(editingPostId){posts=posts.map(p=>p.id===editingPostId?{...p,...post}:p)}else posts.unshift(post);
     if(!store.set(KEYS.posts,posts))return; if(post.folderId)folderMap[post.id]=post.folderId;else delete folderMap[post.id];saveFolders(); renderAllPosts(); closeCompose(); toast(editingPostId?'Fiche modifiée':'Fiche enregistrée sur cet appareil');
@@ -1408,12 +1449,19 @@
       return;
     }
     if(post.type==='text'){
+      if(post.cardType==='Vocabulaire'){
+        const frontFace=`<div class="card front"><div class="card-tag-row"><span class="card-tag gold">Vocabulaire</span><span class="card-index">Post</span></div><div class="card-body vocab-body"><div class="vocab-center">${post.image?`<div class="vocab-image"><img src="${post.image}" alt="" style="width:${post.imageSize||60}%;max-width:100%;height:auto;display:block;background:transparent;"></div>`:''}<h1 class="title vocab-word" style="font-size:${post.titleSize||46}px;">${escapeHtml(post.title)}</h1></div>${post.source?`<div class="sources"><div class="sources-label">langue</div><div class="post-source">${escapeHtml(post.source)}</div></div>`:''}</div></div>`;
+        hb=!!(post.backBody&&post.backBody.trim());
+        const backFace=hb?`<div class="card back"><div class="card-tag-row"><span class="card-tag back-tag">Traduction</span><span class="card-index">Post</span></div><div class="card-body vocab-body"><div class="vocab-center"><p class="lead vocab-translation" style="font-size:${post.bodySize||22}px;">${formatBody(post.backBody)}</p></div></div></div>`:'';
+        cardHtml=`<div class="card-inner" id="${innerId}">${frontFace}${backFace}</div>`;
+      }else{
       const schema=Array.isArray(post.schema)?post.schema.filter(Boolean):[];
       const schemaHtml=post.cardType==='Schéma'&&schema.length ? '<div class="schema-card">'+schema.map((n,i)=>(i?'<div class="schema-card-arrow">↓</div>':'')+'<div class="schema-card-node">'+escapeHtml(n)+'</div>').join('')+'</div>' : '';
       const frontFace=`<div class="card front"><div class="card-tag-row"><span class="card-tag gold">${escapeHtml(post.cardType||'Publication')}</span><span class="card-index">Post</span></div><div class="card-body">${post.title?`<h1 class="title" style="font-size:${post.titleSize||36}px;">${escapeHtml(post.title)}</h1>`:''}${post.image?`<div style="display:flex;justify-content:center;margin:0 0 14px;"><img src="${post.image}" alt="" style="width:${post.imageSize||60}%;max-width:100%;height:auto;display:block;background:transparent;"></div>`:''}<p class="lead" style="font-size:${post.bodySize||18}px;">${formatBody(post.body)}</p>${schemaHtml}${post.source?`<div class="sources"><div class="sources-label">source</div><div class="post-source">${escapeHtml(post.source)}</div></div>`:''}<p class="example" style="margin-top:auto;">${escapeHtml(post.legend||post.author)}</p></div></div>`;
       hb=!!(post.backBody&&post.backBody.trim());
       const backFace=hb?`<div class="card back"><div class="card-tag-row"><span class="card-tag back-tag">Verso</span><span class="card-index">Post</span></div><div class="card-body">${post.backTitle?`<h1 class="title" style="font-size:${post.titleSize||36}px;">${escapeHtml(post.backTitle)}</h1>`:''}<p class="lead" style="font-size:${post.bodySize||18}px;">${formatBody(post.backBody)}</p></div></div>`:'';
       cardHtml=`<div class="card-inner" id="${innerId}">${frontFace}${backFace}</div>`;
+      }
     }
     else{hb=!!post.imageBack;cardHtml=`<div class="card-inner" id="${innerId}"><div class="card photo front"><div class="card-body"><img class="post-photo" src="${post.imageFront}" alt=""></div></div>${hb?`<div class="card photo back"><div class="card-body"><img class="post-photo" src="${post.imageBack}" alt=""></div></div>`:''}</div>`}
     section.innerHTML=`<div class="flip-container">${cardHtml}<div class="post-tools"><button class="post-tool-btn edit-post" title="Modifier">✎</button><button class="delete-btn" title="Supprimer"><svg viewBox="0 0 20 20"><path d="M4 5h12 M8 5V3h4v2 M6 5l1 12h6l1-12"/></svg></button></div>${hb?`<div class="card-controls"><button class="ctrl-btn flip-btn" data-target="${innerId}" aria-label="Retourner la fiche"><svg viewBox="0 0 20 20"><path d="M17 10a7 7 0 1 1-2-4.9M17 3v4h-4"/></svg></button></div>`:''}</div>`;
@@ -1438,11 +1486,11 @@
       updateSchemaVisibility();updateSubmitState();
       return;
     }
-    if(post.type==='text'){composeMode='text';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='text'));composePhotoFields.style.display='none';composeTextFields.style.display='block';composeType.value=post.cardType||'Concept';composeTitle.value=post.title||'';composeTitleSize.value=String(post.titleSize||36);composeTextSize.value=String(post.bodySize||18);composeText.value=post.body||'';composeSource.value=post.source||'';composeLegend.value=post.legend||'';if(post.image){pendingImage=post.image;composeImagePreview.src=post.image;composeImagePreview.style.display='block';composeImageRemove.style.display='inline-block';composeImageSizeRow.style.display='block';composeImageSize.value=String(post.imageSize||60);composeImageSizeLabel.textContent=(post.imageSize||60)+'%'}else{pendingImage=null;composeImagePreview.src='';composeImagePreview.style.display='none';composeImageRemove.style.display='none';composeImageSizeRow.style.display='none';composeImageSize.value='60';composeImageSizeLabel.textContent='60%'}const hasBack=!!(post.backBody&&post.backBody.trim());composeHasBack.checked=hasBack;composeBackFields.style.display=hasBack?'block':'none';composeBackTitle.value=post.backTitle||'';composeBackText.value=post.backBody||'';populateComposeFolders(post.folderId||folderMap[post.id]||'');const sc=Array.isArray(post.schema)?post.schema:[];schemaNode1.value=sc[0]||'';schemaNode2.value=sc[1]||'';schemaNode3.value=sc[2]||'';updateSchemaVisibility()}else{composeMode='photo';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='photo'));composePhotoFields.style.display='block';composeTextFields.style.display='none';pendingFront=post.imageFront;pendingBack=post.imageBack||null;composePreviewFront.src=pendingFront;composePreviewFront.style.display='block';if(pendingBack){composePreviewBack.src=pendingBack;composePreviewBack.style.display='block'}}updateSubmitState()}
+    if(post.type==='text'){composeMode='text';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='text'));composePhotoFields.style.display='none';composeTextFields.style.display='block';composeType.value=post.cardType||'Concept';composeTitle.value=post.title||'';composeTitleSize.value=String(post.titleSize||36);composeTextSize.value=String(post.bodySize||18);composeText.value=post.body||'';composeSource.value=post.source||'';composeLegend.value=post.legend||'';vocabTranslation.value=post.cardType==='Vocabulaire'?(post.backBody||''):'';if(post.image){pendingImage=post.image;composeImagePreview.src=post.image;composeImagePreview.style.display='block';composeImageRemove.style.display='inline-block';composeImageSizeRow.style.display='block';composeImageSize.value=String(post.imageSize||60);composeImageSizeLabel.textContent=(post.imageSize||60)+'%'}else{pendingImage=null;composeImagePreview.src='';composeImagePreview.style.display='none';composeImageRemove.style.display='none';composeImageSizeRow.style.display='none';composeImageSize.value='60';composeImageSizeLabel.textContent='60%'}const hasBack=!!(post.backBody&&post.backBody.trim());composeHasBack.checked=hasBack;composeBackFields.style.display=hasBack?'block':'none';composeBackTitle.value=post.backTitle||'';composeBackText.value=post.backBody||'';populateComposeFolders(post.folderId||folderMap[post.id]||'');const sc=Array.isArray(post.schema)?post.schema:[];schemaNode1.value=sc[0]||'';schemaNode2.value=sc[1]||'';schemaNode3.value=sc[2]||'';updateSchemaVisibility()}else{composeMode='photo';$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode==='photo'));composePhotoFields.style.display='block';composeTextFields.style.display='none';pendingFront=post.imageFront;pendingBack=post.imageBack||null;composePreviewFront.src=pendingFront;composePreviewFront.style.display='block';if(pendingBack){composePreviewBack.src=pendingBack;composePreviewBack.style.display='block'}}updateSubmitState()}
 
   // Library / discovery
   const libraryOverlay=$('#library-overlay'), librarySearch=$('#library-search'), libraryResults=$('#library-results'), coverFileInput=$('#cover-file-input'); let libraryFilter='all', coverEditingId=null;
-  const COVER_COLORS={'Concept':'#8FA05C','Schéma':'#B49A46','Résumé de livre':'#B46A72','Citation':'#A9B7C6','Définition':'#7C9E9E','Question':'#9C7CA0','Quiz':'#B49A46','Note':'#8A8F98','Photo':'#2D3A47'};
+  const COVER_COLORS={'Concept':'#8FA05C','Schéma':'#B49A46','Résumé de livre':'#B46A72','Citation':'#A9B7C6','Définition':'#7C9E9E','Question':'#9C7CA0','Quiz':'#B49A46','Vocabulaire':'#6D8CA8','Note':'#8A8F98','Photo':'#2D3A47'};
   function coverColorFor(type){return COVER_COLORS[type]||'#6B7A54'}
   function saveCovers(){store.set(KEYS.covers,covers)}
   function openLibrary(){libraryOverlay.classList.add('open');renderLibrary();setTimeout(()=>librarySearch.focus(),80)}
