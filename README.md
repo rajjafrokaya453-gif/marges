@@ -5,6 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Marges</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2D3A47">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=KoPub+Batang:wght@400;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -27,6 +30,7 @@
     --rule:rgba(45,58,71,.18);
     --header-h:60px;
     --bar-h:74px;
+    --tabs-h:44px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
@@ -59,6 +63,30 @@
     letter-spacing:-.01em;
   }
 
+  /* ===================== FEED CATEGORY TABS ===================== */
+  #feed-tabs{
+    position:fixed; left:0; right:0; z-index:78;
+    top:calc(var(--header-h) + env(safe-area-inset-top));
+    height:var(--tabs-h);
+    display:flex; align-items:center; gap:22px;
+    padding:0 max(20px, env(safe-area-inset-left)) 0 max(20px, env(safe-area-inset-right));
+    background:var(--bg);
+    border-bottom:1px solid rgba(168,181,138,.28);
+    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  #feed-tabs::-webkit-scrollbar{ display:none; }
+  .feed-tab{
+    background:transparent; border:none; padding:0; margin:0;
+    font:600 14px 'Montserrat',Arial,sans-serif; color:rgba(168,181,138,.6);
+    white-space:nowrap; cursor:pointer; position:relative; height:100%;
+    display:flex; align-items:center;
+  }
+  .feed-tab.active{ color:var(--sage); }
+  .feed-tab.active::after{
+    content:''; position:absolute; left:2px; right:2px; bottom:0;
+    height:2px; background:var(--sage); border-radius:2px;
+  }
+
   /* ===================== FEED / CARDS ===================== */
   #feed{
     height:100dvh; min-height:100svh;
@@ -76,7 +104,7 @@
     scroll-snap-align:start; scroll-snap-stop:always;
     position:relative;
     padding:
-      calc(var(--header-h) + env(safe-area-inset-top) + 22px)
+      calc(var(--header-h) + var(--tabs-h) + env(safe-area-inset-top) + 22px)
       max(16px, env(safe-area-inset-right))
       calc(var(--bar-h) + env(safe-area-inset-bottom) + 22px)
       max(16px, env(safe-area-inset-left));
@@ -523,7 +551,7 @@
     #action-bar{ gap:22px; padding:12px 20px; }
   }
   @media (orientation:landscape) and (max-height:520px){
-    :root{ --header-h:48px; --bar-h:60px; }
+    :root{ --header-h:48px; --bar-h:60px; --tabs-h:40px; }
   }
   @media (prefers-reduced-motion:reduce){
     .flip-container,.card-inner,.ctrl-btn{ transition:none !important; }
@@ -618,6 +646,10 @@
 <header id="app-header">
   <span class="brand">Marges.</span>
 </header>
+
+<div id="feed-tabs" role="tablist" aria-label="Catégories">
+  <button type="button" class="feed-tab active" data-cat="all">Tous</button>
+</div>
 
 <nav id="action-bar" aria-label="Actions">
   <button id="msg-btn" class="action-btn" aria-label="Messagerie">
@@ -924,7 +956,8 @@
 (() => {
   const $ = (s, r=document) => r.querySelector(s);
   const $$ = (s, r=document) => [...r.querySelectorAll(s)];
-  const feed=$('#feed'), nav=$('#nav'), hint=$('#hint');
+  const feed=$('#feed'), nav=$('#nav'), hint=$('#hint'), feedTabsBar=$('#feed-tabs');
+  let feedCategory='all';
   const KEYS={posts:'marges:v5:posts',favorites:'marges:v5:favorites',profile:'marges:v5:profile',messages:'marges:v5:messages',settings:'marges:v5:settings',folders:'marges:v5:folders',folderMap:'marges:v5:folderMap',deletedCards:'marges:v5:deletedCards',covers:'marges:v5:covers',quizAnswers:'marges:v5:quizAnswers'};
   let applyingCloudData=false;
   const store={
@@ -1102,8 +1135,62 @@
     bar.insertBefore(all,$('#add-folder'));
     folders.forEach(f=>{const b=document.createElement('button');b.className='folder-chip '+(libraryFolder===f.id?'active':'');b.textContent=f.name;b.onclick=()=>{libraryFolder=f.id;renderFolderControls();renderLibrary()};bar.insertBefore(b,$('#add-folder'))});
   }
+
+  // ---- Onglets de catégories du fil (par dossier), à la TikTok ----
+  function renderFeedTabs(){
+    if(!feedTabsBar) return;
+    if(feedCategory!=='all' && !folders.some(f=>f.id===feedCategory)) feedCategory='all';
+    feedTabsBar.innerHTML='';
+    const makeTab=(id,label)=>{
+      const b=document.createElement('button');
+      b.type='button'; b.setAttribute('role','tab');
+      b.className='feed-tab'+(feedCategory===id?' active':'');
+      b.textContent=label; b.dataset.cat=id;
+      b.addEventListener('click',()=>setFeedCategory(id));
+      return b;
+    };
+    feedTabsBar.appendChild(makeTab('all','Tous'));
+    folders.forEach(f=>feedTabsBar.appendChild(makeTab(f.id,f.name)));
+  }
+  function applyFeedCategoryFilter(){
+    $$('.card-slot').forEach(slot=>{
+      const match = feedCategory==='all' || slot.dataset.folderId===feedCategory;
+      slot.classList.toggle('hidden-by-filter', !match);
+    });
+    rebuildFeedControls();
+  }
+  function setFeedCategory(id){
+    if(feedCategory===id) return;
+    feedCategory=id;
+    renderFeedTabs();
+    applyFeedCategoryFilter();
+    feed.scrollTo({top:0,behavior:'auto'});
+  }
+  let feedTouchX=0, feedTouchY=0, feedSwipeAxis=null;
+  feed.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1) return;
+    feedTouchX=e.touches[0].clientX; feedTouchY=e.touches[0].clientY; feedSwipeAxis=null;
+  },{passive:true});
+  feed.addEventListener('touchmove',e=>{
+    if(e.touches.length!==1) return;
+    const dx=e.touches[0].clientX-feedTouchX, dy=e.touches[0].clientY-feedTouchY;
+    if(feedSwipeAxis===null && (Math.abs(dx)>8||Math.abs(dy)>8)) feedSwipeAxis = Math.abs(dx)>Math.abs(dy)*1.2 ? 'x' : 'y';
+    if(feedSwipeAxis==='x') e.preventDefault();
+  },{passive:false});
+  feed.addEventListener('touchend',e=>{
+    const axis=feedSwipeAxis; feedSwipeAxis=null;
+    if(axis!=='x') return;
+    const dx=e.changedTouches[0].clientX-feedTouchX;
+    if(Math.abs(dx)<50) return;
+    const tabs=$$('.feed-tab',feedTabsBar);
+    const idx=tabs.findIndex(t=>t.dataset.cat===feedCategory);
+    if(idx===-1) return;
+    const next = dx<0 ? Math.min(tabs.length-1, idx+1) : Math.max(0, idx-1);
+    if(next!==idx) setFeedCategory(tabs[next].dataset.cat);
+  });
+
   function populateComposeFolders(selected=''){const sel=$('#compose-folder');if(!sel)return;sel.innerHTML='<option value="">Sans dossier</option>'+folders.map(f=>`<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`).join('');sel.value=selected||''}
-  $('#add-folder')?.addEventListener('click',()=>{const name=prompt('Nom du nouveau dossier :');if(name&&name.trim()){folders.push({id:'folder-'+Date.now(),name:name.trim()});saveFolders();renderFolderControls();populateComposeFolders();toast('Dossier créé')}});
+  $('#add-folder')?.addEventListener('click',()=>{const name=prompt('Nom du nouveau dossier :');if(name&&name.trim()){folders.push({id:'folder-'+Date.now(),name:name.trim()});saveFolders();renderFolderControls();renderFeedTabs();populateComposeFolders();toast('Dossier créé')}});
 
   function identifyStaticCards(){
     $$('.card-slot').forEach((slot,i)=>{
@@ -1298,12 +1385,12 @@
     if(!store.set(KEYS.posts,posts))return; if(post.folderId)folderMap[post.id]=post.folderId;else delete folderMap[post.id];saveFolders(); renderAllPosts(); closeCompose(); toast(editingPostId?'Fiche modifiée':'Fiche enregistrée sur cet appareil');
   });
 
-  function renderAllPosts(){$$('.card-slot[data-user-post="1"]').forEach(x=>x.remove());posts.slice().reverse().forEach(renderPost);identifyStaticCards();syncLikeButtons();rebuildFeedControls();renderLibrary()}
+  function renderAllPosts(){$$('.card-slot[data-user-post="1"]').forEach(x=>x.remove());posts.slice().reverse().forEach(renderPost);identifyStaticCards();syncLikeButtons();applyFeedCategoryFilter();renderLibrary()}
   const anchor=$('#user-posts-anchor');
   const QUIZ_LETTERS=['A','B','C','D'];
   function renderPost(post){
     if(post.type==='photo'&&!post.imageFront&&post.image)post.imageFront=post.image;
-    const innerId='inner-'+post.id,section=document.createElement('section');section.className='card-slot';section.dataset.userPost='1';section.dataset.cardId=post.id;section.dataset.cardType=post.cardType||(post.type==='photo'?'Photo':'Note');section.dataset.cardTitle=post.title||post.quizQuestion||post.cardType||'Publication';section.dataset.owner=post.author||'Vous';
+    const innerId='inner-'+post.id,section=document.createElement('section');section.className='card-slot';section.dataset.userPost='1';section.dataset.cardId=post.id;section.dataset.cardType=post.cardType||(post.type==='photo'?'Photo':'Note');section.dataset.cardTitle=post.title||post.quizQuestion||post.cardType||'Publication';section.dataset.owner=post.author||'Vous';section.dataset.folderId=post.folderId||folderMap[post.id]||'';
     let cardHtml='', hb=false;
     if(post.cardType==='Quiz'&&Array.isArray(post.quizOptions)){
       const alreadyAnswered=Object.prototype.hasOwnProperty.call(quizAnswers,post.id);
@@ -1486,7 +1573,7 @@
   // Overlay usability
   $$('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));document.addEventListener('keydown',e=>{if(e.key==='Escape')$$('.overlay.open').forEach(o=>o.classList.remove('open'))});
 
-  function boot(){identifyStaticCards();renderFolderControls();populateComposeFolders();renderAllPosts();syncLikeButtons();rebuildFeedControls();renderLibrary();syncLikeCurrentButton()}
+  function boot(){identifyStaticCards();renderFolderControls();renderFeedTabs();populateComposeFolders();renderAllPosts();syncLikeButtons();applyFeedCategoryFilter();renderLibrary();syncLikeCurrentButton()}
 
   // ---- Écran de connexion ----
   const authScreen=$('#auth-screen'),authFormWrap=$('#auth-form-wrap'),authStatus=$('#auth-status'),authEmail=$('#auth-email'),authPassword=$('#auth-password'),authSubmit=$('#auth-submit'),authError=$('#auth-error'),authModeToggle=$('#auth-mode-toggle');
@@ -1552,6 +1639,7 @@
     });
   }
   startAuthFlow();
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 })();
 </script>
 
