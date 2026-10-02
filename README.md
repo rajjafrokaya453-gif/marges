@@ -355,6 +355,7 @@
   }
   .auth-sub{ font-family:'Montserrat',Arial,sans-serif; font-size:13px; color:var(--ink-soft); margin:0 0 18px; }
   .auth-error{ font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:var(--rust); min-height:16px; margin:-8px 0 10px; }
+  .auth-hint{ font-family:'Montserrat',Arial,sans-serif; font-size:11.5px; color:var(--ink-soft); margin:-6px 0 12px; line-height:1.4; }
   .modal-panel{
     background:var(--paper); border-radius:16px 16px 8px 8px;
     width:100%; max-width:420px; max-height:min(90dvh,760px);
@@ -394,7 +395,7 @@
     border:1px solid var(--rule); border-radius:4px; background:#ffffff40; color:var(--ink);
     cursor:pointer; min-height:40px;
   }
-  #compose-text, #compose-title, #compose-source, #compose-legend, #add-contact, #thread-input, #library-search, #auth-email, #auth-password{
+  #compose-text, #compose-title, #compose-source, #compose-legend, #add-contact, #thread-input, #library-search, #auth-email, #auth-password, #auth-username{
     font-size:16px; /* avoid iOS zoom */
   }
   #compose-text{ white-space:pre-wrap; }
@@ -415,7 +416,7 @@
   .select-field, #compose-title, .library-folder-select{
     font-family:'Montserrat',Arial,sans-serif;
   }
-  #compose-title, #compose-source, #compose-legend, .select-field, #library-search, #add-contact, #thread-input, #auth-email, #auth-password{
+  #compose-title, #compose-source, #compose-legend, .select-field, #library-search, #add-contact, #thread-input, #auth-email, #auth-password, #auth-username{
     width:100%; padding:9px 10px; border:1px solid var(--rule); border-radius:4px;
     margin-bottom:14px; background:#ffffff40; color:var(--ink);
   }
@@ -453,6 +454,18 @@
   #contact-list{ list-style:none; margin:0 0 14px; padding:0; }
   #contact-list li{ padding:10px 8px; border-bottom:1px solid var(--rule); cursor:pointer; font-size:14.5px; }
   #contact-list li:hover{ background:#00000008; }
+  .chat-ul{ list-style:none; margin:0 0 14px; padding:0; }
+  .chat-ul li{ display:flex; align-items:center; gap:8px; padding:10px 8px; border-bottom:1px solid var(--rule); font-size:14.5px; }
+  #contact-list li{ cursor:pointer; }
+  .chat-name{ font-weight:600; flex-shrink:0; max-width:45%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chat-status{ flex:1; min-width:0; font-family:'Montserrat',Arial,sans-serif; font-size:11px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chat-unread{ width:9px; height:9px; border-radius:50%; background:var(--rust); flex-shrink:0; }
+  .chat-empty{ color:var(--ink-soft); font-style:italic; font-size:13px; }
+  .chat-btn{ margin-left:auto; background:none; border:1px solid var(--rule); border-radius:100px; padding:5px 12px; font-family:'Montserrat',Arial,sans-serif; font-size:11px; color:var(--ink); cursor:pointer; }
+  .chat-btn.primary{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  #thread-title{ font-family:'KoPub Batang','Times New Roman',serif; font-weight:700; font-size:18px; color:var(--olive); margin:0 0 10px; }
+  #msg-btn{ position:relative; }
+  #msg-btn.has-alert .dot{ display:block; position:absolute; top:-3px; right:-4px; width:9px; height:9px; border-radius:50%; background:var(--rust); }
   #thread-view{ display:none; flex-direction:column; }
   #thread-view.active{ display:flex; }
   #thread-back{ background:none; border:none; cursor:pointer; font-family:'Montserrat',Arial,sans-serif; font-size:11px; color:var(--ink-soft); margin-bottom:10px; text-align:left; padding:0; }
@@ -646,6 +659,13 @@
       <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password">
       <p class="auth-error" id="auth-error"></p>
       <button class="btn primary" id="auth-submit" style="width:100%;">Se connecter</button>
+    </div>
+    <div id="auth-username-wrap" style="display:none;">
+      <span class="field-label">Nom de profil</span>
+      <input type="text" id="auth-username" placeholder="ex : rokaya" maxlength="20" autocapitalize="off" autocomplete="off">
+      <p class="auth-hint">C'est avec ce nom que tes amis te trouveront dans la messagerie. 3 à 20 caractères : lettres, chiffres, point, tiret ou underscore.</p>
+      <p class="auth-error" id="auth-username-error"></p>
+      <button class="btn primary" id="auth-username-submit" style="width:100%;">Continuer</button>
     </div>
   </div>
 </div>
@@ -924,17 +944,25 @@
       </div>
 
       <div id="list-view">
-        <span class="field-label">Démo — ce navigateur simule plusieurs comptes. Tapez un nom pour lui écrire.</span>
-        <input type="text" id="add-contact" placeholder="Nom d'un contact (ex. Léa)">
-        <ul id="contact-list"></ul>
+        <p class="empty-note" id="messaging-off" style="display:none;">La messagerie n'est pas encore activée : les règles de sécurité Firestore doivent être mises à jour.</p>
+        <span class="field-label">Chercher un nom de profil</span>
+        <input type="text" id="add-contact" placeholder="Nom de profil de ton amie…" autocapitalize="off" autocomplete="off">
+        <ul id="search-results" class="chat-ul"></ul>
+        <div id="invites-block" style="display:none;">
+          <span class="field-label">Invitations reçues</span>
+          <ul id="invites-list" class="chat-ul"></ul>
+        </div>
+        <span class="field-label">Conversations</span>
+        <ul id="contact-list" class="chat-ul"></ul>
         <p class="empty-note" id="no-contacts">Aucune conversation pour l'instant.</p>
       </div>
 
       <div id="thread-view">
         <button id="thread-back">← retour aux conversations</button>
+        <div id="thread-title"></div>
         <div id="thread-messages"></div>
         <div id="thread-input-row">
-          <input type="text" id="thread-input" placeholder="Écrire un message…">
+          <input type="text" id="thread-input" placeholder="Écrire un message…" maxlength="1000">
           <button class="btn primary" id="thread-send">Envoyer</button>
         </div>
       </div>
@@ -947,7 +975,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot, addDoc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDWGmSX-cAmv9RUeFGES-xS0G-MYjKHpAc",
@@ -962,7 +990,7 @@
   const auth = getAuth(fbApp);
   const db = getFirestore(fbApp);
 
-  window.MargesCloud = { auth, db, doc, getDoc, setDoc, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut };
+  window.MargesCloud = { auth, db, doc, getDoc, setDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot, addDoc, updateDoc, deleteDoc, writeBatch, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut };
   window.dispatchEvent(new Event('marges-firebase-ready'));
 </script>
 
@@ -1030,13 +1058,15 @@
     cloudPushTimer=setTimeout(pushToCloud,1200);
   }
   async function pushToCloud(){
-    if(!cloudUser) return;
+    if(!cloudUser) return true;
     try{
       const {doc,setDoc,db}=window.MargesCloud;
       await setDoc(doc(db,'users',cloudUser.uid), buildCloudPayload());
+      return true;
     }catch(e){
       console.error('Erreur de synchronisation cloud',e);
       toast('Synchronisation impossible — vérifiez votre connexion.');
+      return false;
     }
   }
   async function pullFromCloud(uid){
@@ -1611,12 +1641,187 @@
   $('#import-file').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=='Marges')throw 0;posts=Array.isArray(d.posts)?d.posts:[];favorites=new Set(Array.isArray(d.favorites)?d.favorites:[]);activeProfile=d.profile||'Vous';store.set(KEYS.posts,posts);persistFavorites();store.set(KEYS.profile,activeProfile);if(Array.isArray(d.messages))store.set(KEYS.messages,d.messages);if(d.settings)store.set(KEYS.settings,d.settings);folders=Array.isArray(d.folders)?d.folders:[];folderMap=d.folderMap&&typeof d.folderMap==='object'?d.folderMap:{};deletedCards=new Set(Array.isArray(d.deletedCards)?d.deletedCards:[]);store.set(KEYS.deletedCards,[...deletedCards]);covers=d.covers&&typeof d.covers==='object'?d.covers:{};saveCovers();quizAnswers=d.quizAnswers&&typeof d.quizAnswers==='object'?d.quizAnswers:{};saveQuizAnswers();saveFolders();$('#profile-name').textContent=activeProfile;renderAllPosts();renderFolderControls();renderLibrary();toast('Données importées')}catch(err){alert('Ce fichier ne semble pas être une sauvegarde Marges valide.')}};r.readAsText(f);e.target.value=''});
 
   // Profile + messages
-  const profileNameEl=$('#profile-name');profileNameEl.textContent=activeProfile;$('#change-profile').addEventListener('click',()=>{const name=prompt('Nom du profil :',activeProfile);if(name&&name.trim()){activeProfile=name.trim();store.set(KEYS.profile,activeProfile);profileNameEl.textContent=activeProfile;renderContactList()}});
-  const msgBtn=$('#msg-btn'),messagesOverlay=$('#messages-overlay'),listView=$('#list-view'),threadView=$('#thread-view'),contactListEl=$('#contact-list'),noContactsEl=$('#no-contacts'),addContactInput=$('#add-contact'),threadMessagesEl=$('#thread-messages'),threadInput=$('#thread-input');
-  msgBtn.addEventListener('click',()=>{messagesOverlay.classList.add('open');showList();renderContactList()});$('#messages-close').addEventListener('click',()=>messagesOverlay.classList.remove('open'));function showList(){listView.style.display='block';threadView.classList.remove('active')}function showThread(){listView.style.display='none';threadView.classList.add('active')}$('#thread-back').addEventListener('click',showList);
-  function getAllMessages(){return store.get(KEYS.messages,[])}function saveAllMessages(m){store.set(KEYS.messages,m)}
-  function renderContactList(){const msgs=getAllMessages(),partners=new Set();msgs.forEach(m=>{if(m.from===activeProfile)partners.add(m.to);if(m.to===activeProfile)partners.add(m.from)});contactListEl.innerHTML='';noContactsEl.style.display=partners.size?'none':'block';[...partners].forEach(name=>{const li=document.createElement('li');li.textContent=name;li.addEventListener('click',()=>openThread(name));contactListEl.appendChild(li)})}
-  addContactInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&addContactInput.value.trim()){const n=addContactInput.value.trim();addContactInput.value='';if(n!==activeProfile)openThread(n)}});function openThread(name){currentContact=name;showThread();renderThreadMessages()}function renderThreadMessages(){const thread=getAllMessages().filter(m=>(m.from===activeProfile&&m.to===currentContact)||(m.from===currentContact&&m.to===activeProfile)).sort((a,b)=>a.ts-b.ts);threadMessagesEl.innerHTML=thread.length?'':'<p class="empty-note">Aucun message pour l\'instant.</p>';thread.forEach(m=>{const d=document.createElement('div');d.className='msg-bubble '+(m.from===activeProfile?'mine':'theirs');d.innerHTML=escapeHtml(m.text)+`<div class="msg-meta">${escapeHtml(m.from)}</div>`;threadMessagesEl.appendChild(d)});threadMessagesEl.scrollTop=threadMessagesEl.scrollHeight}function sendMessage(){const text=threadInput.value.trim();if(!text||!currentContact)return;threadInput.value='';const m=getAllMessages();m.push({from:activeProfile,to:currentContact,text,ts:Date.now()});saveAllMessages(m);renderThreadMessages()}$('#thread-send').addEventListener('click',sendMessage);threadInput.addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()});
+  const profileNameEl=$('#profile-name');profileNameEl.textContent=activeProfile;
+  const msgBtn=$('#msg-btn'),messagesOverlay=$('#messages-overlay'),listView=$('#list-view'),threadView=$('#thread-view'),contactListEl=$('#contact-list'),noContactsEl=$('#no-contacts'),addContactInput=$('#add-contact'),threadMessagesEl=$('#thread-messages'),threadInput=$('#thread-input'),searchResultsEl=$('#search-results'),invitesBlockEl=$('#invites-block'),invitesListEl=$('#invites-list'),threadTitleEl=$('#thread-title'),messagingOffEl=$('#messaging-off');
+
+  // ---- Messagerie en ligne (Firestore) ----
+  const USERNAME_RE=/^[A-Za-z0-9._-]{3,20}$/;
+  const SEEN_KEY='marges:v5:chatSeen';
+  let messagingReady=true, myUsername=null, chatsUnsub=null, threadUnsub=null, chatsCache=[], currentChat=null, searchTimer=null;
+  function getSeen(){try{return JSON.parse(localStorage.getItem(SEEN_KEY)||'{}')}catch(e){return {}}}
+  function markSeen(id,ts){const s=getSeen();s[id]=ts||Date.now();try{localStorage.setItem(SEEN_KEY,JSON.stringify(s))}catch(e){}}
+  function chatIdFor(a,b){return [a,b].sort().join('_')}
+  function otherOf(chat){const other=chat.members.find(m=>m!==cloudUser.uid);return {uid:other,name:(chat.names&&chat.names[other])||'Ami·e'}}
+  function isUnread(chat){const seen=getSeen()[chat.id]||0;return chat.status==='accepted'&&chat.lastMessage&&chat.lastFrom&&chat.lastFrom!==cloudUser.uid&&(chat.lastTs||0)>seen}
+  function updateMsgAlert(){
+    if(!cloudUser){msgBtn.classList.remove('has-alert');return}
+    const pendingIn=chatsCache.some(c=>c.status==='pending'&&c.requester!==cloudUser.uid);
+    msgBtn.classList.toggle('has-alert',pendingIn||chatsCache.some(isUnread));
+  }
+  async function fetchMyUsername(uid){
+    const {db,collection,query,where,limit,getDocs}=window.MargesCloud;
+    const snap=await getDocs(query(collection(db,'usernames'),where('uid','==',uid),limit(1)));
+    return snap.empty?null:snap.docs[0].data().username;
+  }
+  async function claimUsername(uid,name,oldName){
+    const {db,doc,writeBatch}=window.MargesCloud;
+    const batch=writeBatch(db);
+    const sameKey=oldName&&oldName.toLowerCase()===name.toLowerCase();
+    if(oldName&&!sameKey) batch.delete(doc(db,'usernames',oldName.toLowerCase()));
+    batch.set(doc(db,'usernames',name.toLowerCase()),{uid,username:name,usernameLower:name.toLowerCase()});
+    await batch.commit();
+  }
+  $('#change-profile').addEventListener('click',async()=>{
+    if(!messagingReady||!cloudUser){
+      const name=prompt('Nom du profil :',activeProfile);
+      if(name&&name.trim()){activeProfile=name.trim();store.set(KEYS.profile,activeProfile);profileNameEl.textContent=activeProfile}
+      return;
+    }
+    const name=prompt('Nouveau nom de profil (3 à 20 caractères : lettres, chiffres, . _ -) :',activeProfile);
+    if(!name) return;
+    const n=name.trim(); if(n===activeProfile) return;
+    if(!USERNAME_RE.test(n)){alert('Nom invalide : 3 à 20 caractères, avec lettres, chiffres, point, tiret ou underscore.');return}
+    try{
+      await claimUsername(cloudUser.uid,n,myUsername);
+    }catch(e){alert('Ce nom de profil est déjà pris. Essaie-en un autre.');return}
+    myUsername=n; activeProfile=n; store.set(KEYS.profile,n); profileNameEl.textContent=n;
+    try{
+      const {db,doc,updateDoc}=window.MargesCloud;
+      await Promise.all(chatsCache.map(c=>updateDoc(doc(db,'chats',c.id),{['names.'+cloudUser.uid]:n})));
+    }catch(e){console.error(e)}
+    toast('Nom de profil modifié');
+  });
+
+  function stopChatsListener(){if(chatsUnsub){chatsUnsub();chatsUnsub=null}chatsCache=[];updateMsgAlert()}
+  function stopThreadListener(){if(threadUnsub){threadUnsub();threadUnsub=null}}
+  function startChatsListener(){
+    if(!messagingReady||!cloudUser) return;
+    stopChatsListener();
+    const {db,collection,query,where,onSnapshot}=window.MargesCloud;
+    chatsUnsub=onSnapshot(query(collection(db,'chats'),where('members','array-contains',cloudUser.uid)),snap=>{
+      chatsCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+      updateMsgAlert();
+      if(messagesOverlay.classList.contains('open')&&!threadView.classList.contains('active')) renderChatLists();
+    },err=>{console.error('Erreur messagerie',err)});
+  }
+
+  function showList(){listView.style.display='block';threadView.classList.remove('active');stopThreadListener();currentChat=null}
+  function showThread(){listView.style.display='none';threadView.classList.add('active')}
+  $('#thread-back').addEventListener('click',()=>{showList();renderChatLists()});
+  msgBtn.addEventListener('click',()=>{messagesOverlay.classList.add('open');showList();renderChatLists()});
+  $('#messages-close').addEventListener('click',()=>{messagesOverlay.classList.remove('open');stopThreadListener()});
+
+  function mkButton(label,cls,fn){const b=document.createElement('button');b.type='button';b.className='chat-btn '+(cls||'');b.textContent=label;b.addEventListener('click',e=>{e.stopPropagation();fn()});return b}
+  function renderChatLists(){
+    messagingOffEl.style.display=messagingReady?'none':'block';
+    contactListEl.innerHTML='';invitesListEl.innerHTML='';
+    const sorted=chatsCache.slice().sort((a,b)=>(b.lastTs||0)-(a.lastTs||0));
+    const invites=sorted.filter(c=>c.status==='pending'&&c.requester!==cloudUser?.uid);
+    const rest=sorted.filter(c=>!(c.status==='pending'&&c.requester!==cloudUser?.uid));
+    invitesBlockEl.style.display=invites.length?'block':'none';
+    invites.forEach(c=>{
+      const o=otherOf(c),li=document.createElement('li');
+      const nm=document.createElement('span');nm.className='chat-name';nm.textContent=o.name+' t\'invite';li.appendChild(nm);
+      li.appendChild(mkButton('Accepter','primary',()=>acceptInvite(c)));
+      li.appendChild(mkButton('Refuser','',()=>declineInvite(c)));
+      invitesListEl.appendChild(li);
+    });
+    noContactsEl.style.display=rest.length?'none':'block';
+    rest.forEach(c=>{
+      const o=otherOf(c),li=document.createElement('li');
+      const nm=document.createElement('span');nm.className='chat-name';nm.textContent=o.name;li.appendChild(nm);
+      if(c.status==='pending'){
+        const st=document.createElement('span');st.className='chat-status';st.textContent='invitation envoyée';li.appendChild(st);
+        li.appendChild(mkButton('Annuler','',()=>declineInvite(c)));
+      }else{
+        if(isUnread(c)){const d=document.createElement('span');d.className='chat-unread';li.appendChild(d)}
+        if(c.lastMessage){const p=document.createElement('span');p.className='chat-status';p.textContent=c.lastMessage;li.appendChild(p)}
+        li.addEventListener('click',()=>openThread(c));
+      }
+      contactListEl.appendChild(li);
+    });
+  }
+  async function acceptInvite(c){
+    try{const {db,doc,updateDoc}=window.MargesCloud;await updateDoc(doc(db,'chats',c.id),{status:'accepted'});toast('Invitation acceptée')}
+    catch(e){console.error(e);toast('Impossible d\'accepter pour le moment.')}
+  }
+  async function declineInvite(c){
+    try{const {db,doc,deleteDoc}=window.MargesCloud;await deleteDoc(doc(db,'chats',c.id))}
+    catch(e){console.error(e);toast('Action impossible pour le moment.')}
+  }
+  async function inviteUser(targetUid,targetName){
+    try{
+      const {db,doc,setDoc}=window.MargesCloud;
+      const members=[cloudUser.uid,targetUid].sort();
+      await setDoc(doc(db,'chats',chatIdFor(cloudUser.uid,targetUid)),{
+        members,names:{[cloudUser.uid]:myUsername||activeProfile,[targetUid]:targetName},
+        status:'pending',requester:cloudUser.uid,createdAt:Date.now(),lastMessage:'',lastTs:Date.now()
+      });
+      toast('Invitation envoyée');
+      addContactInput.value='';searchResultsEl.innerHTML='';
+    }catch(e){console.error(e);toast('Invitation impossible pour le moment.')}
+  }
+  async function runSearch(q){
+    if(!messagingReady||!cloudUser) return;
+    try{
+      const {db,collection,query,where,limit,getDocs}=window.MargesCloud;
+      const snap=await getDocs(query(collection(db,'usernames'),where('usernameLower','>=',q),where('usernameLower','<=',q+'\uf8ff'),limit(8)));
+      const found=snap.docs.map(d=>d.data()).filter(u=>u.uid!==cloudUser.uid);
+      searchResultsEl.innerHTML='';
+      if(!found.length){const li=document.createElement('li');li.className='chat-empty';li.textContent='Aucun profil trouvé.';searchResultsEl.appendChild(li);return}
+      found.forEach(u=>{
+        const li=document.createElement('li');
+        const nm=document.createElement('span');nm.className='chat-name';nm.textContent=u.username;li.appendChild(nm);
+        const existing=chatsCache.find(c=>c.members.includes(u.uid));
+        if(!existing) li.appendChild(mkButton('Inviter','primary',()=>inviteUser(u.uid,u.username)));
+        else if(existing.status==='accepted'){li.appendChild(mkButton('Écrire','primary',()=>openThread(existing)))}
+        else if(existing.requester===cloudUser.uid){const st=document.createElement('span');st.className='chat-status';st.textContent='invitation envoyée';li.appendChild(st)}
+        else li.appendChild(mkButton('Accepter','primary',()=>acceptInvite(existing)));
+        searchResultsEl.appendChild(li);
+      });
+    }catch(e){console.error(e);searchResultsEl.innerHTML='<li class="chat-empty">Recherche impossible pour le moment.</li>'}
+  }
+  addContactInput.addEventListener('input',()=>{
+    clearTimeout(searchTimer);
+    const q=addContactInput.value.trim().toLowerCase();
+    if(q.length<2){searchResultsEl.innerHTML='';return}
+    searchTimer=setTimeout(()=>runSearch(q),350);
+  });
+
+  function openThread(chat){
+    if(!messagingReady||!cloudUser||chat.status!=='accepted') return;
+    currentChat=chat;showThread();
+    threadTitleEl.textContent=otherOf(chat).name;
+    threadMessagesEl.innerHTML='<p class="empty-note">Chargement…</p>';
+    stopThreadListener();
+    const {db,collection,query,orderBy,limit,onSnapshot}=window.MargesCloud;
+    threadUnsub=onSnapshot(query(collection(db,'chats',chat.id,'messages'),orderBy('ts'),limit(300)),snap=>{
+      threadMessagesEl.innerHTML=snap.empty?'<p class="empty-note">Aucun message pour l\'instant.</p>':'';
+      let lastTs=0;
+      snap.docs.forEach(d=>{
+        const m=d.data(),div=document.createElement('div');
+        div.className='msg-bubble '+(m.from===cloudUser.uid?'mine':'theirs');
+        div.textContent=m.text;
+        threadMessagesEl.appendChild(div);
+        lastTs=Math.max(lastTs,m.ts||0);
+      });
+      threadMessagesEl.scrollTop=threadMessagesEl.scrollHeight;
+      markSeen(chat.id,Math.max(lastTs,Date.now()));updateMsgAlert();
+    },err=>{console.error(err);threadMessagesEl.innerHTML='<p class="empty-note">Impossible de charger les messages.</p>'});
+  }
+  async function sendMessage(){
+    const text=threadInput.value.trim();
+    if(!text||!currentChat||!cloudUser) return;
+    threadInput.value='';
+    try{
+      const {db,collection,addDoc,doc,updateDoc}=window.MargesCloud;
+      const now=Date.now();
+      await addDoc(collection(db,'chats',currentChat.id,'messages'),{from:cloudUser.uid,text,ts:now});
+      await updateDoc(doc(db,'chats',currentChat.id),{lastMessage:text.slice(0,80),lastTs:now,lastFrom:cloudUser.uid});
+    }catch(e){console.error(e);threadInput.value=text;toast('Message non envoyé — vérifiez votre connexion.')}
+  }
+  $('#thread-send').addEventListener('click',sendMessage);
+  threadInput.addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()});
 
   // Overlay usability
   $$('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));document.addEventListener('keydown',e=>{if(e.key==='Escape')$$('.overlay.open').forEach(o=>o.classList.remove('open'))});
@@ -1625,7 +1830,10 @@
 
   // ---- Écran de connexion ----
   const authScreen=$('#auth-screen'),authFormWrap=$('#auth-form-wrap'),authStatus=$('#auth-status'),authEmail=$('#auth-email'),authPassword=$('#auth-password'),authSubmit=$('#auth-submit'),authError=$('#auth-error'),authModeToggle=$('#auth-mode-toggle');
-  let authMode='login';
+  const authUsernameWrap=$('#auth-username-wrap'),authUsername=$('#auth-username'),authUsernameSubmit=$('#auth-username-submit'),authUsernameError=$('#auth-username-error');
+  let authMode='login', usernameResolver=null;
+  const CACHE_UID_KEY='marges:v5:cacheUid';
+  function clearLocalCache(){Object.values(KEYS).forEach(k=>localStorage.removeItem(k));localStorage.removeItem(CACHE_UID_KEY);localStorage.removeItem(SEEN_KEY)}
   authModeToggle.addEventListener('click',e=>{
     const btn=e.target.closest('.mode-btn'); if(!btn) return;
     authMode=btn.dataset.mode;
@@ -1633,8 +1841,32 @@
     authSubmit.textContent=authMode==='login'?'Se connecter':'Créer le compte';
     authError.textContent='';
   });
-  function showAuthStatus(msg){ authStatus.textContent=msg||''; authFormWrap.style.display='none'; authScreen.classList.add('open'); }
-  function showAuthForm(){ authStatus.textContent=''; authFormWrap.style.display='block'; authScreen.classList.add('open'); }
+  function showAuthStatus(msg){ authStatus.textContent=msg||''; authFormWrap.style.display='none'; authUsernameWrap.style.display='none'; authScreen.classList.add('open'); }
+  function showAuthForm(){ authStatus.textContent=''; authFormWrap.style.display='block'; authUsernameWrap.style.display='none'; authScreen.classList.add('open'); }
+  function askUsername(prefill){
+    return new Promise(res=>{
+      usernameResolver=res;
+      authStatus.textContent='Dernière étape';
+      authFormWrap.style.display='none'; authUsernameWrap.style.display='block';
+      authUsername.value=prefill||''; authUsernameError.textContent='';
+      authScreen.classList.add('open');
+      setTimeout(()=>authUsername.focus(),50);
+    });
+  }
+  authUsernameSubmit.addEventListener('click',async()=>{
+    const n=authUsername.value.trim();
+    authUsernameError.textContent='';
+    if(!USERNAME_RE.test(n)){ authUsernameError.textContent='3 à 20 caractères : lettres, chiffres, point, tiret ou underscore.'; return; }
+    authUsernameSubmit.disabled=true;
+    try{
+      await claimUsername(cloudUser.uid,n,null);
+      const r=usernameResolver; usernameResolver=null; if(r) r(n);
+    }catch(e){
+      authUsernameError.textContent=(e&&e.code==='permission-denied')?'Ce nom de profil est déjà pris. Essaie-en un autre.':'Enregistrement impossible. Réessaie.';
+    }
+    authUsernameSubmit.disabled=false;
+  });
+  authUsername.addEventListener('keydown',e=>{if(e.key==='Enter')authUsernameSubmit.click()});
   function hideAuthScreen(){ authScreen.classList.remove('open'); }
   function translateAuthError(code){
     const map={
@@ -1661,7 +1893,15 @@
   });
   [authEmail,authPassword].forEach(inp=>inp.addEventListener('keydown',e=>{if(e.key==='Enter')authSubmit.click()}));
   $('#logout-btn').addEventListener('click',async()=>{
-    if(!confirm('Se déconnecter ? Vos données restent en ligne et seront retéléchargées à la prochaine connexion.')) return;
+    if(!confirm('Se déconnecter ? Tes données restent en ligne et seront retéléchargées à la prochaine connexion.')) return;
+    clearTimeout(cloudPushTimer);
+    const ok=await pushToCloud();
+    if(!ok && !confirm('La synchronisation a échoué : tes dernières modifications pourraient être perdues. Te déconnecter quand même ?')) return;
+    stopChatsListener(); stopThreadListener();
+    messagesOverlay.classList.remove('open');
+    cloudSyncEnabled=false;
+    clearLocalCache();
+    loadLocalState();
     const {auth,signOut}=window.MargesCloud;
     await signOut(auth);
   });
@@ -1673,15 +1913,26 @@
     onAuthStateChanged(auth,async(user)=>{
       if(user){
         cloudUser=user;
+        // sécurité : ne jamais mélanger les données locales de deux comptes sur le même appareil
+        const cachedUid=localStorage.getItem(CACHE_UID_KEY);
+        if(cachedUid&&cachedUid!==user.uid) clearLocalCache();
+        localStorage.setItem(CACHE_UID_KEY,user.uid);
         showAuthStatus('Synchronisation de vos données…');
         await pullFromCloud(user.uid);
         cloudSyncEnabled=true;
         loadLocalState();
+        // nom de profil unique (pour la messagerie)
+        let uname=null; messagingReady=true;
+        try{ uname=await fetchMyUsername(user.uid); }catch(e){ console.error(e); messagingReady=false; }
+        if(messagingReady&&!uname) uname=await askUsername(activeProfile&&activeProfile!=='Vous'?activeProfile:'');
+        if(uname){ myUsername=uname; if(activeProfile!==uname){ activeProfile=uname; store.set(KEYS.profile,uname); } }
         profileNameEl.textContent=activeProfile;
         hideAuthScreen();
         boot();
+        startChatsListener();
       }else{
-        cloudUser=null; cloudSyncEnabled=false;
+        stopChatsListener(); stopThreadListener();
+        cloudUser=null; cloudSyncEnabled=false; myUsername=null;
         showAuthForm();
       }
     });
