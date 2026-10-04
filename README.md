@@ -474,6 +474,42 @@
   .msg-bubble.mine{ align-self:flex-end; background:var(--ink); color:var(--paper); border-bottom-right-radius:3px; }
   .msg-bubble.theirs{ align-self:flex-start; background:rgba(169,183,198,.28); color:var(--ink); border-bottom-left-radius:3px; }
   .msg-meta{ font-family:'Montserrat',Arial,sans-serif; font-size:9.5px; color:var(--ink-soft); margin-top:2px; }
+
+  /* ---- Fiche partagée dans un message ---- */
+  .msg-card{ max-width:78%; padding:10px; border-radius:12px; background:#ffffffee; color:var(--ink); border:1px solid var(--rule); }
+  .msg-card.mine{ align-self:flex-end; }
+  .msg-card.theirs{ align-self:flex-start; }
+  .msg-card-tag{ font-family:'Montserrat',Arial,sans-serif; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--olive-text); margin-bottom:4px; }
+  .msg-card-title{ font-family:'KoPub Batang','Times New Roman',serif; font-weight:700; font-size:15px; color:var(--olive); margin-bottom:8px; }
+  .msg-card-add{ width:100%; background:var(--ink); color:var(--paper); border:none; border-radius:100px; padding:7px 0; font-family:'Montserrat',Arial,sans-serif; font-size:11.5px; cursor:pointer; }
+  .msg-card-add:disabled{ opacity:.55; cursor:default; }
+
+  /* ---- Sélecteur de conversation pour le partage ---- */
+  #share-list{ list-style:none; margin:0; padding:0; max-height:50dvh; overflow-y:auto; }
+  #share-list li{ display:flex; align-items:center; gap:8px; padding:11px 8px; border-bottom:1px solid var(--rule); cursor:pointer; font-size:14.5px; }
+  #share-list li:hover{ background:#00000008; }
+  #share-empty{ display:none; }
+
+  /* ---- Découvrir (fiches publiques) ---- */
+  .discover-card-wrap{ position:relative; width:100%; max-width:440px; margin:0 auto 26px; }
+  .discover-card-wrap .flip-container{ height:420px; opacity:1; transform:none; transition:none; }
+  .discover-owner-row{ display:flex; align-items:center; justify-content:space-between; margin:8px 2px 6px; font-family:'Montserrat',Arial,sans-serif; font-size:11.5px; color:var(--ink-soft); }
+  .discover-owner-name{ font-weight:600; color:var(--sage); }
+  .discover-actions{ display:flex; gap:16px; align-items:center; margin:0 2px 4px; }
+  .discover-action-btn{ display:flex; align-items:center; gap:5px; background:none; border:none; cursor:pointer; font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:var(--ink-soft); padding:6px 2px; }
+  .discover-action-btn svg{ width:17px; height:17px; }
+  .discover-action-btn svg path{ fill:none; stroke:var(--ink-soft); stroke-width:1.6; }
+  .discover-action-btn.liked{ color:var(--rust); }
+  .discover-action-btn.liked svg path{ fill:var(--rust); stroke:var(--rust); }
+  .discover-comments{ display:none; margin:8px 2px 0; padding:10px; border:1px solid var(--rule); border-radius:8px; background:#ffffff14; }
+  .discover-comments.open{ display:block; }
+  .discover-comment-list{ max-height:180px; overflow-y:auto; margin-bottom:8px; display:flex; flex-direction:column; gap:7px; }
+  .discover-comment{ font-size:12.5px; color:var(--paper); line-height:1.35; }
+  .discover-comment b{ color:var(--sage); font-weight:600; }
+  .discover-comment-row{ display:flex; gap:7px; }
+  .discover-comment-input{ flex:1; font-family:'Montserrat',Arial,sans-serif; font-size:12.5px; padding:7px 9px; border-radius:100px; border:1px solid var(--rule); background:#ffffff14; color:var(--paper); }
+  .discover-comment-send{ background:var(--sage); border:none; border-radius:100px; padding:0 14px; font-family:'Montserrat',Arial,sans-serif; font-size:11.5px; cursor:pointer; color:var(--midnight); }
+  .public-badge{ font-size:11px; }
   #thread-input-row{ display:flex; gap:8px; }
   #thread-input{ flex:1; margin-bottom:0; }
   .empty-note{ font-size:13.5px; color:var(--ink-soft); font-style:italic; }
@@ -686,6 +722,9 @@
   <button id="library-btn" class="action-btn" aria-label="Bibliothèque">
     <svg viewBox="0 0 20 22"><path d="M3 2h14v18l-7-4.5L3 20V2z"/></svg>
   </button>
+  <button id="discover-btn" class="action-btn" aria-label="Découvrir les fiches publiques">
+    <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M2 10h16 M10 2c2.5 2.2 2.5 13.8 0 16 M10 2c-2.5 2.2-2.5 13.8 0 16"/></svg>
+  </button>
   <button id="like-current-btn" class="action-btn" aria-label="Aimer la fiche affichée">
     <svg viewBox="0 0 20 18"><path d="M10 17 C2 11 1 5 5.5 2.5 C8 1 10 2.5 10 5 C10 2.5 12 1 14.5 2.5 C19 5 18 11 10 17 Z"/></svg>
   </button>
@@ -738,6 +777,14 @@
       <div class="mode-toggle">
         <button type="button" class="mode-btn active" data-mode="photo">Image recto / verso</button>
         <button type="button" class="mode-btn" data-mode="text">Texte</button>
+      </div>
+
+      <div id="compose-visibility-group" style="padding:10px 12px; border:1px solid var(--rule); border-radius:6px; margin-bottom:14px; background:#ffffff30;">
+        <label style="display:flex; align-items:center; gap:8px; font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:var(--ink-soft); cursor:pointer; margin-bottom:0;">
+          <input type="checkbox" id="compose-is-public" style="width:16px; height:16px; margin:0;">
+          Rendre cette fiche publique
+        </label>
+        <p class="compose-type-help" style="margin:6px 0 0;">Privée : toi seul·e la vois. Publique : tous les comptes Marges peuvent la voir, l'aimer, la commenter et la partager — mais pas la modifier.</p>
       </div>
 
       <div id="compose-photo-fields">
@@ -966,6 +1013,35 @@
           <button class="btn primary" id="thread-send">Envoyer</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE PICKER OVERLAY -->
+<div class="overlay" id="share-overlay">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h2>Partager cette fiche</h2>
+      <button class="modal-close" id="share-close">fermer ✕</button>
+    </div>
+    <div class="modal-body">
+      <ul id="share-list"></ul>
+      <p class="empty-note" id="share-empty">Tu n'as encore aucune conversation acceptée. Invite d'abord quelqu'un dans la messagerie.</p>
+    </div>
+  </div>
+</div>
+
+<!-- DISCOVER OVERLAY (fiches publiques) -->
+<div class="overlay" id="discover-overlay">
+  <div class="modal-panel wide-panel">
+    <div class="modal-head">
+      <h2>Découvrir</h2>
+      <button class="modal-close" id="discover-close">fermer ✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="empty-note" id="discover-off" style="display:none;">Les fiches publiques ne sont pas encore activées : les règles de sécurité Firestore doivent être mises à jour.</p>
+      <div id="discover-list"></div>
+      <p class="empty-note" id="discover-empty" style="display:none;">Aucune fiche publique pour l'instant.</p>
     </div>
   </div>
 </div>
@@ -1470,9 +1546,10 @@
       hb=!!(post.backBody&&post.backBody.trim());
       const backFace=hb?`<div class="card back"><div class="card-tag-row"><span class="card-tag back-tag">Développement</span><span class="card-index">Post</span></div><div class="card-body">${post.backTitle?`<h1 class="title" style="font-size:${post.titleSize||36}px;">${escapeHtml(post.backTitle)}</h1>`:''}<p class="lead" style="font-size:${post.bodySize||18}px;">${formatBody(post.backBody)}</p></div></div>`:'';
       cardHtml=`<div class="card-inner" id="${innerId}">${frontFace}${backFace}</div>`;
-      section.innerHTML=`<div class="flip-container">${cardHtml}<div class="post-tools"><button class="post-tool-btn edit-post" title="Modifier">✎</button><button class="delete-btn" title="Supprimer"><svg viewBox="0 0 20 20"><path d="M4 5h12 M8 5V3h4v2 M6 5l1 12h6l1-12"/></svg></button></div>${hb?`<div class="card-controls"><button class="ctrl-btn flip-btn" data-target="${innerId}" aria-label="Retourner la fiche"><svg viewBox="0 0 20 20"><path d="M17 10a7 7 0 1 1-2-4.9M17 3v4h-4"/></svg></button></div>`:''}</div>`;
+      section.innerHTML=`<div class="flip-container">${cardHtml}<div class="post-tools"><button class="post-tool-btn share-post" title="Partager">⇪</button><button class="post-tool-btn edit-post" title="Modifier">✎</button><button class="delete-btn" title="Supprimer"><svg viewBox="0 0 20 20"><path d="M4 5h12 M8 5V3h4v2 M6 5l1 12h6l1-12"/></svg></button></div>${hb?`<div class="card-controls"><button class="ctrl-btn flip-btn" data-target="${innerId}" aria-label="Retourner la fiche"><svg viewBox="0 0 20 20"><path d="M17 10a7 7 0 1 1-2-4.9M17 3v4h-4"/></svg></button></div>`:''}</div>`;
       $('.delete-btn',section).addEventListener('click',()=>{if(confirm('Supprimer cette fiche ?')){posts=posts.filter(p=>p.id!==post.id);favorites.delete(post.id);delete folderMap[post.id];delete quizAnswers[post.id];if(!store.set(KEYS.posts,posts))return;saveFolders();saveQuizAnswers();persistFavorites();section.remove();rebuildFeedControls();renderLibrary();toast('Fiche supprimée')}});
       $('.edit-post',section).addEventListener('click',()=>editPost(post));
+      $('.share-post',section).addEventListener('click',()=>openSharePicker(post));
       anchor.after(section);
       ensureDownloadButton(section);
       if(alreadyAnswered){ const wrap=$('.quiz-options',section); if(wrap) applyQuizAnswerState(wrap,post,quizAnswers[post.id],false); }
@@ -1494,9 +1571,11 @@
       }
     }
     else{hb=!!post.imageBack;cardHtml=`<div class="card-inner" id="${innerId}"><div class="card photo front"><div class="card-body"><img class="post-photo" src="${post.imageFront}" alt=""></div></div>${hb?`<div class="card photo back"><div class="card-body"><img class="post-photo" src="${post.imageBack}" alt=""></div></div>`:''}</div>`}
-    section.innerHTML=`<div class="flip-container">${cardHtml}<div class="post-tools"><button class="post-tool-btn edit-post" title="Modifier">✎</button><button class="delete-btn" title="Supprimer"><svg viewBox="0 0 20 20"><path d="M4 5h12 M8 5V3h4v2 M6 5l1 12h6l1-12"/></svg></button></div>${hb?`<div class="card-controls"><button class="ctrl-btn flip-btn" data-target="${innerId}" aria-label="Retourner la fiche"><svg viewBox="0 0 20 20"><path d="M17 10a7 7 0 1 1-2-4.9M17 3v4h-4"/></svg></button></div>`:''}</div>`;
+    section.innerHTML=`<div class="flip-container">${cardHtml}<div class="post-tools"><button class="post-tool-btn share-post" title="Partager">⇪</button><button class="post-tool-btn edit-post" title="Modifier">✎</button><button class="delete-btn" title="Supprimer"><svg viewBox="0 0 20 20"><path d="M4 5h12 M8 5V3h4v2 M6 5l1 12h6l1-12"/></svg></button></div>${hb?`<div class="card-controls"><button class="ctrl-btn flip-btn" data-target="${innerId}" aria-label="Retourner la fiche"><svg viewBox="0 0 20 20"><path d="M17 10a7 7 0 1 1-2-4.9M17 3v4h-4"/></svg></button></div>`:''}</div>`;
     $('.delete-btn',section).addEventListener('click',()=>{if(confirm('Supprimer cette fiche ?')){posts=posts.filter(p=>p.id!==post.id);favorites.delete(post.id);delete folderMap[post.id];if(!store.set(KEYS.posts,posts))return;saveFolders();persistFavorites();section.remove();rebuildFeedControls();renderLibrary();toast('Fiche supprimée')}});
-    $('.edit-post',section).addEventListener('click',()=>editPost(post));anchor.after(section);
+    $('.edit-post',section).addEventListener('click',()=>editPost(post));
+    $('.share-post',section).addEventListener('click',()=>openSharePicker(post));
+    anchor.after(section);
     ensureDownloadButton(section);
   }
   function editPost(post){
@@ -1799,16 +1878,83 @@
       threadMessagesEl.innerHTML=snap.empty?'<p class="empty-note">Aucun message pour l\'instant.</p>':'';
       let lastTs=0;
       snap.docs.forEach(d=>{
-        const m=d.data(),div=document.createElement('div');
-        div.className='msg-bubble '+(m.from===cloudUser.uid?'mine':'theirs');
-        div.textContent=m.text;
-        threadMessagesEl.appendChild(div);
+        const m=d.data();
+        if(m.type==='card'&&m.card){
+          const div=document.createElement('div');
+          div.className='msg-card '+(m.from===cloudUser.uid?'mine':'theirs');
+          const tag=document.createElement('div');tag.className='msg-card-tag';tag.textContent=m.card.cardType||'Fiche';div.appendChild(tag);
+          const title=document.createElement('div');title.className='msg-card-title';title.textContent=m.card.title||m.card.quizQuestion||m.card.cardType||'Fiche partagée';div.appendChild(title);
+          const addBtn=document.createElement('button');addBtn.type='button';addBtn.className='msg-card-add';
+          if(addedCardMsgIds.has(d.id)){addBtn.textContent='Ajoutée ✓';addBtn.disabled=true}
+          else{
+            addBtn.textContent='Ajouter à ma bibliothèque';
+            addBtn.addEventListener('click',()=>{addSharedCardToLibrary(m.card);addedCardMsgIds.add(d.id);addBtn.textContent='Ajoutée ✓';addBtn.disabled=true});
+          }
+          div.appendChild(addBtn);
+          threadMessagesEl.appendChild(div);
+        }else{
+          const div=document.createElement('div');
+          div.className='msg-bubble '+(m.from===cloudUser.uid?'mine':'theirs');
+          div.textContent=m.text;
+          threadMessagesEl.appendChild(div);
+        }
         lastTs=Math.max(lastTs,m.ts||0);
       });
       threadMessagesEl.scrollTop=threadMessagesEl.scrollHeight;
       markSeen(chat.id,Math.max(lastTs,Date.now()));updateMsgAlert();
     },err=>{console.error(err);threadMessagesEl.innerHTML='<p class="empty-note">Impossible de charger les messages.</p>'});
   }
+
+  // ---- Partager une fiche dans une conversation ----
+  const addedCardMsgIds=new Set();
+  const shareOverlay=$('#share-overlay'),shareListEl=$('#share-list'),shareEmptyEl=$('#share-empty');
+  let sharePostData=null;
+  function serializeForShare(post){
+    const payload={
+      type:post.type,cardType:post.cardType,category:post.category,
+      title:post.title,body:post.body,quizQuestion:post.quizQuestion,quizOptions:post.quizOptions,
+      backTitle:post.backTitle,backBody:post.backBody,source:post.source,legend:post.legend,
+      titleSize:post.titleSize,bodySize:post.bodySize,image:post.image,imageSize:post.imageSize,
+      imageFront:post.imageFront,imageBack:post.imageBack,schema:post.schema
+    };
+    return JSON.parse(JSON.stringify(payload));
+  }
+  function openSharePicker(post){
+    if(!cloudUser){toast('Connecte-toi pour partager une fiche.');return}
+    if(!messagingReady){toast("La messagerie n'est pas encore activée.");return}
+    sharePostData=serializeForShare(post);
+    const accepted=chatsCache.filter(c=>c.status==='accepted');
+    shareListEl.innerHTML='';
+    shareEmptyEl.style.display=accepted.length?'none':'block';
+    accepted.forEach(c=>{
+      const li=document.createElement('li');
+      li.textContent=otherOf(c).name;
+      li.addEventListener('click',()=>sendCardToChat(c));
+      shareListEl.appendChild(li);
+    });
+    shareOverlay.classList.add('open');
+  }
+  $('#share-close').addEventListener('click',()=>shareOverlay.classList.remove('open'));
+  async function sendCardToChat(chat){
+    if(!sharePostData||!cloudUser) return;
+    try{
+      const {db,collection,addDoc,doc,updateDoc}=window.MargesCloud;
+      const now=Date.now();
+      const label='📇 '+(sharePostData.title||sharePostData.quizQuestion||sharePostData.cardType||'Fiche partagée');
+      await addDoc(collection(db,'chats',chat.id,'messages'),{from:cloudUser.uid,type:'card',card:sharePostData,text:label,ts:now});
+      await updateDoc(doc(db,'chats',chat.id),{lastMessage:label.slice(0,80),lastTs:now,lastFrom:cloudUser.uid});
+      shareOverlay.classList.remove('open');
+      toast('Fiche envoyée');
+    }catch(e){console.error(e);toast('Envoi impossible — vérifiez votre connexion.')}
+  }
+  function addSharedCardToLibrary(cardData){
+    const post={id:'post-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),...cardData,author:activeProfile,folderId:'',ts:Date.now()};
+    posts.unshift(post);
+    if(!store.set(KEYS.posts,posts)) return;
+    renderAllPosts();
+    toast('Fiche ajoutée à ta bibliothèque');
+  }
+
   async function sendMessage(){
     const text=threadInput.value.trim();
     if(!text||!currentChat||!cloudUser) return;
